@@ -1,0 +1,1518 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+<meta name="theme-color" content="#1b4d5c">
+<title>후쿠오카·우레시노·나가사키 가족여행</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Gowun+Batang:wght@400;700&family=Gowun+Dodum&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<style>
+  :root{
+    --sea:#1b4d5c;
+    --sea-deep:#123842;
+    --sea-light:#2e7d8f;
+    --sand:#f4ede2;
+    --sand-deep:#e8dcc8;
+    --coral:#e07856;
+    --coral-soft:#f0a285;
+    --gold:#c8932f;
+    --ink:#2a2622;
+    --ink-soft:#6b625a;
+    --paper:#fbf7f0;
+    --leaf:#5a8a6b;
+  }
+  *{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent;}
+  html{scroll-behavior:smooth;}
+
+  /* ===== LANDING (표지) ===== */
+  #landing{
+    position:fixed;inset:0;z-index:100;
+    max-width:560px;margin:0 auto;
+    background:
+      radial-gradient(ellipse 120% 60% at 50% -10%, rgba(255,200,220,.9) 0%, rgba(255,220,235,.5) 35%, transparent 62%),
+      radial-gradient(circle at 18% 20%, rgba(200,225,255,.6) 0%, transparent 30%),
+      radial-gradient(circle at 82% 78%, rgba(255,240,190,.55) 0%, transparent 36%),
+      linear-gradient(180deg,#ffd6e6 0%,#f4dcf0 35%,#dde4f7 65%,#e3f5ec 100%);
+    color:var(--paper);
+    display:flex;flex-direction:column;align-items:center;justify-content:center;
+    text-align:center;
+    padding:max(40px,env(safe-area-inset-top)) 30px max(40px,env(safe-area-inset-bottom));
+    overflow-y:auto;-webkit-overflow-scrolling:touch;
+    transition:opacity .7s ease,visibility .7s ease;
+  }
+  #landing.hide{opacity:0;visibility:hidden;}
+  /* 비네팅(가장자리 부드럽게) + 필름 그레인 */
+  #landing::before{
+    content:"";position:absolute;inset:0;z-index:2;pointer-events:none;
+    background:radial-gradient(ellipse 85% 75% at 50% 42%, transparent 58%, rgba(30,25,60,.35) 100%);
+  }
+  #landing::after{
+    content:"";position:absolute;inset:0;z-index:2;pointer-events:none;opacity:.04;
+    background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='120' height='120'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+  }
+
+  /* 별빛 입자 */
+  #landing .stars{position:absolute;inset:0;pointer-events:none;z-index:0;}
+  #landing .star{position:absolute;background:#fff;border-radius:50%;opacity:.7;
+    animation:twinkle 3s ease-in-out infinite;}
+  @keyframes twinkle{0%,100%{opacity:.2;transform:scale(.7);}50%{opacity:1;transform:scale(1.25);}}
+
+  /* 별똥별 */
+  #landing .shoot{position:absolute;width:2px;height:2px;background:#fff;border-radius:50%;
+    box-shadow:0 0 6px 2px rgba(255,255,255,.8);opacity:0;z-index:0;}
+  #landing .shoot::after{content:"";position:absolute;top:50%;right:0;width:80px;height:1.5px;
+    background:linear-gradient(270deg,rgba(255,255,255,.9),transparent);transform:translateY(-50%);}
+  #landing .sh1{top:14%;left:62%;animation:shoot 6s ease-in 2s infinite;}
+  #landing .sh2{top:8%;left:30%;animation:shoot 7s ease-in 5.5s infinite;}
+  @keyframes shoot{
+    0%{opacity:0;transform:translate(0,0) rotate(18deg);}
+    6%{opacity:1;}
+    18%{opacity:1;transform:translate(-160px,90px) rotate(18deg);}
+    24%,100%{opacity:0;transform:translate(-180px,100px) rotate(18deg);}
+  }
+
+  /* 해/달 (은은한 빛무리) */
+  #landing .sun{
+    position:absolute;top:6%;left:50%;transform:translateX(-50%);width:84px;height:84px;border-radius:50%;
+    background:radial-gradient(circle,#fff6e6 0%,#ffdca0 50%,rgba(255,205,150,.25) 78%,transparent 100%);
+    box-shadow:0 0 70px 26px rgba(255,215,160,.4);
+    z-index:0;animation:sunGlow 5s ease-in-out infinite;
+  }
+  @keyframes sunGlow{0%,100%{transform:translateX(-50%) scale(1);opacity:.92;}50%{transform:translateX(-50%) scale(1.06);opacity:1;}}
+
+  /* 물 위 빛 반사 (아래쪽 세로 빛기둥) */
+  #landing .reflect{
+    position:absolute;left:50%;transform:translateX(-50%);bottom:0;width:90px;height:200px;z-index:1;
+    background:linear-gradient(180deg, rgba(255,225,180,.0) 0%, rgba(255,220,175,.30) 60%, rgba(255,225,185,.5) 100%);
+    filter:blur(7px);opacity:.6;animation:shimmer 4s ease-in-out infinite;pointer-events:none;
+  }
+  @keyframes shimmer{0%,100%{opacity:.45;width:80px;}50%{opacity:.7;width:104px;}}
+
+  /* 구름 */
+  #landing .cloud{position:absolute;background:rgba(255,245,235,.18);border-radius:40px;
+    filter:blur(3px);z-index:0;animation:drift 22s linear infinite;}
+  #landing .cloud::before,#landing .cloud::after{content:"";position:absolute;
+    background:rgba(255,245,235,.18);border-radius:50%;}
+  #landing .c1{width:90px;height:24px;top:22%;left:-110px;animation-duration:30s;}
+  #landing .c1::before{width:38px;height:38px;top:-16px;left:14px;}
+  #landing .c1::after{width:30px;height:30px;top:-11px;left:46px;}
+  #landing .c2{width:64px;height:18px;top:34%;left:-90px;animation-duration:40s;animation-delay:6s;opacity:.7;}
+  #landing .c2::before{width:28px;height:28px;top:-12px;left:10px;}
+  #landing .c2::after{width:22px;height:22px;top:-8px;left:34px;}
+  @keyframes drift{from{transform:translateX(0);}to{transform:translateX(680px);}}
+
+  /* floating decorative circles (잔잔한 빛망울) */
+  #landing .bubble{position:absolute;border-radius:50%;
+    background:radial-gradient(circle at 35% 35%,rgba(255,255,255,.12),rgba(255,255,255,.02));
+    animation:float 7s ease-in-out infinite;z-index:0;}
+  #landing .b1{width:200px;height:200px;top:-60px;left:-50px;}
+  #landing .b2{width:130px;height:130px;bottom:130px;right:-40px;animation-delay:1.5s;}
+  #landing .b3{width:80px;height:80px;top:28%;right:24px;animation-delay:3s;}
+  @keyframes float{0%,100%{transform:translateY(0);}50%{transform:translateY(-22px);}}
+
+  /* 다중 파도 레이어 (아래쪽) */
+  #landing .waves{position:absolute;left:0;right:0;bottom:0;height:180px;z-index:1;pointer-events:none;}
+  #landing .waves svg{position:absolute;left:0;width:200%;height:100%;}
+  #landing .wave1{bottom:0;fill:rgba(255,210,200,.12);animation:waveX 14s linear infinite;}
+  #landing .wave2{bottom:0;fill:rgba(255,240,235,.15);animation:waveX 10s linear infinite reverse;}
+  #landing .wave3{bottom:0;fill:rgba(247,237,226,.95);animation:waveX 18s linear infinite;}
+  @keyframes waveX{from{transform:translateX(0);}to{transform:translateX(-50%);}}
+  /* 옛 lwave 숨김 */
+  #landing .lwave{display:none;}
+
+  .land-inner{position:relative;z-index:3;display:flex;flex-direction:column;align-items:center;
+    animation:riseIn 1s cubic-bezier(.2,.7,.3,1) both;}
+  @keyframes riseIn{from{opacity:0;transform:translateY(28px);}to{opacity:1;transform:none;}}
+
+  .land-eyebrow{font-size:.8rem;letter-spacing:.4em;text-transform:uppercase;opacity:.75;margin-bottom:22px;
+    animation:riseIn 1s .15s both;}
+  .land-penguin{font-size:3.4rem;margin-bottom:10px;animation:riseIn 1s .1s both,bob 3s ease-in-out 1s infinite;}
+  @keyframes bob{0%,100%{transform:translateY(0) rotate(-3deg);}50%{transform:translateY(-10px) rotate(3deg);}}
+  /* 메인 사진 (지아 얼굴) — 테두리 없이 좌우로 움직임 */
+  .photo-wrap{
+    position:relative;width:230px;height:230px;margin-bottom:18px;
+    animation:riseIn 1s .1s both, swayPhoto 3.4s ease-in-out 1s infinite;
+  }
+  @keyframes swayPhoto{
+    0%,100%{transform:translateX(-16px) rotate(-4deg);}
+    50%{transform:translateX(16px) rotate(4deg);}
+  }
+  .land-photo{
+    position:relative;z-index:1;
+    width:230px;height:230px;object-fit:contain;
+    filter:drop-shadow(0 8px 16px rgba(0,0,0,.35));
+    display:block;
+  }
+  .land-photo.placeholder{
+    border-radius:50%;border:2px dashed rgba(255,255,255,.55);
+    display:flex;align-items:center;justify-content:center;
+    text-align:center;font-size:.82rem;color:rgba(255,255,255,.85);line-height:1.6;
+  }
+  /* 반짝이는 작은 별들 (얼굴 주변) */
+  .photo-wrap .sparkle{position:absolute;font-size:1.1rem;z-index:2;animation:sparkle 2.4s ease-in-out infinite;}
+  .photo-wrap .sp1{top:2px;right:24px;animation-delay:0s;}
+  .photo-wrap .sp2{bottom:24px;left:6px;animation-delay:.8s;font-size:.85rem;}
+  .photo-wrap .sp3{top:46%;right:-2px;animation-delay:1.5s;font-size:.7rem;}
+  @keyframes sparkle{0%,100%{opacity:0;transform:scale(.4) rotate(0deg);}50%{opacity:1;transform:scale(1) rotate(20deg);}}
+
+
+  /* ===== 인천→후쿠오카 비행 애니메이션 ===== */
+  .flightmap{
+    position:relative;width:280px;height:160px;margin-bottom:6px;
+    animation:riseIn 1s .1s both;
+  }
+  .flightmap svg{width:100%;height:100%;overflow:visible;}
+  .fm-land{fill:rgba(255,255,255,.14);stroke:rgba(255,255,255,.35);stroke-width:1;}
+  .fm-path{
+    fill:none;stroke:rgba(255,255,255,.55);stroke-width:2;stroke-dasharray:5 6;
+    stroke-linecap:round;
+    stroke-dashoffset:0;animation:dashmove 1.4s linear infinite;
+  }
+  @keyframes dashmove{to{stroke-dashoffset:-22;}}
+  .fm-dot{fill:#fff;}
+  .fm-dot-pulse{fill:var(--coral-soft);transform-origin:center;animation:dotpulse 2s ease-out infinite;}
+  @keyframes dotpulse{0%{r:4;opacity:.9;}70%{r:13;opacity:0;}100%{opacity:0;}}
+  .fm-label{fill:rgba(255,255,255,.92);font-family:'Gowun Dodum',sans-serif;font-size:11px;}
+  .fm-flag{font-size:13px;}
+  /* 비행기: 경로를 따라 이동 */
+  .fm-plane{
+    font-size:22px;
+    animation:flyPath 5s ease-in-out infinite;
+    transform-box:fill-box;
+  }
+  @keyframes flyPath{
+    0%   {offset-distance:0%;opacity:0;}
+    8%   {opacity:1;}
+    92%  {opacity:1;}
+    100% {offset-distance:100%;opacity:0;}
+  }
+  #landing h1{
+    font-family:'Gowun Batang',serif;font-weight:700;
+    font-size:2.7rem;line-height:1.32;letter-spacing:.01em;
+    text-shadow:0 3px 18px rgba(0,0,0,.3);
+    animation:riseIn 1s .25s both;
+  }
+  #landing h1 .accent{color:var(--coral-soft);}
+  .land-sub{margin-top:18px;font-size:1.05rem;opacity:.92;line-height:1.7;animation:riseIn 1s .4s both;}
+  .land-dates{
+    margin-top:22px;display:inline-block;
+    background:rgba(255,255,255,.13);border:1px solid rgba(255,255,255,.3);
+    backdrop-filter:blur(4px);padding:9px 20px;border-radius:30px;font-size:.9rem;
+    animation:riseIn 1s .5s both;
+  }
+  .land-who{margin-top:14px;font-size:.85rem;opacity:.78;animation:riseIn 1s .58s both;}
+  .dday{
+    margin-top:20px;display:inline-flex;align-items:baseline;gap:7px;
+    background:rgba(255,255,255,.16);border:1px solid rgba(255,255,255,.35);
+    backdrop-filter:blur(5px);padding:8px 22px;border-radius:30px;
+    animation:riseIn 1s .62s both,pulse2 2.6s ease-in-out 1.8s infinite;
+  }
+  .dday .lab{font-size:.82rem;opacity:.9;}
+  .dday .num{font-family:'Gowun Batang',serif;font-weight:700;font-size:1.5rem;color:var(--coral-soft);letter-spacing:.02em;}
+  @keyframes pulse2{0%,100%{box-shadow:0 0 0 0 rgba(240,162,133,.0);}50%{box-shadow:0 0 18px 1px rgba(240,162,133,.4);}}
+
+  .go-btn{
+    margin-top:42px;position:relative;
+    width:108px;height:108px;border-radius:50%;
+    border:none;cursor:pointer;
+    background:linear-gradient(145deg,var(--coral),var(--coral-soft));
+    color:#fff;font-family:'Gowun Batang',serif;font-weight:700;font-size:1.7rem;letter-spacing:.05em;
+    box-shadow:0 10px 30px -6px rgba(224,120,86,.6);
+    animation:riseIn 1s .7s both,pulse 2.4s ease-in-out 1.6s infinite;
+    transition:transform .2s;
+  }
+  .go-btn:active{transform:scale(.92);}
+  .go-btn::after{
+    content:"";position:absolute;inset:-7px;border-radius:50%;
+    border:2px solid rgba(255,255,255,.4);animation:ring 2.4s ease-out infinite;
+  }
+  @keyframes pulse{0%,100%{box-shadow:0 10px 30px -6px rgba(224,120,86,.6);}50%{box-shadow:0 10px 42px 2px rgba(224,120,86,.85);}}
+  @keyframes ring{0%{transform:scale(.85);opacity:.8;}100%{transform:scale(1.35);opacity:0;}}
+  .go-hint{margin-top:16px;font-size:.8rem;opacity:.7;letter-spacing:.15em;animation:riseIn 1s .9s both;}
+
+  /* lock scroll while landing visible */
+  body.locked{overflow:hidden;height:100vh;}
+
+  body{
+    font-family:'Gowun Dodum',sans-serif;
+    background:
+      radial-gradient(circle at 15% 8%, rgba(255,210,225,.7) 0%, transparent 30%),
+      radial-gradient(circle at 85% 12%, rgba(200,225,255,.65) 0%, transparent 32%),
+      radial-gradient(circle at 75% 75%, rgba(255,240,190,.55) 0%, transparent 38%),
+      linear-gradient(180deg,
+      #ffd6e6 0%,
+      #ffe0ec 14%,
+      #f4dcf0 30%,
+      #dde4f7 50%,
+      #d8ecf3 70%,
+      #e3f5ec 88%,
+      #fdf3e2 100%);
+    background-attachment:fixed;
+    color:var(--ink);
+    line-height:1.7;
+    max-width:560px;
+    margin:0 auto;
+    overflow-x:hidden;
+    padding-bottom:env(safe-area-inset-bottom);
+    -webkit-font-smoothing:antialiased;
+  }
+  h1,h2,h3,.serif{font-family:'Gowun Batang',serif;}
+
+  /* ---- HERO ---- */
+  .hero{
+    position:relative;
+    background:transparent;
+    color:var(--paper);
+    padding:54px 26px 30px;
+    overflow:hidden;
+    text-align:center;
+  }
+  .hero .wave{position:absolute;top:0;left:0;width:100%;height:100%;opacity:.10;pointer-events:none;}
+  .hero .eyebrow{
+    font-size:.78rem;letter-spacing:.35em;text-transform:uppercase;
+    opacity:.8;margin-bottom:16px;font-family:'Gowun Dodum';
+  }
+  .hero h1{
+    font-size:2.05rem;font-weight:700;line-height:1.35;letter-spacing:.01em;
+    text-shadow:0 2px 12px rgba(0,0,0,.25);
+  }
+  .hero .sub{
+    margin-top:14px;font-size:1.02rem;opacity:.92;
+  }
+  .hero .dates{
+    margin-top:20px;display:inline-block;
+    background:rgba(255,255,255,.14);
+    border:1px solid rgba(255,255,255,.3);
+    backdrop-filter:blur(4px);
+    padding:9px 20px;border-radius:30px;font-size:.92rem;letter-spacing:.02em;
+  }
+  .hero .who{margin-top:14px;font-size:.84rem;opacity:.8;}
+
+  /* ---- ROUTE STRIP ---- */
+  .route{
+    background:var(--paper);
+    margin:14px 16px 0;
+    border-radius:18px;
+    padding:16px 18px;
+    box-shadow:0 8px 24px rgba(18,56,66,.12);
+    position:relative;z-index:3;
+    display:flex;align-items:center;justify-content:center;
+    flex-wrap:wrap;gap:6px;
+    font-size:.82rem;color:var(--sea);
+  }
+  .route::before{
+    content:"";position:absolute;left:0;right:0;top:-14px;height:0;
+  }
+  .route b{color:var(--coral);font-family:'Gowun Batang';}
+  .route .arr{color:var(--sand-deep);font-weight:700;}
+
+  /* ---- TABS ---- */
+  .tabs{
+    position:sticky;top:0;z-index:20;
+    background:rgba(255,255,255,.32);backdrop-filter:blur(12px);
+    -webkit-backdrop-filter:blur(10px);
+    padding:12px 10px 10px;
+    display:flex;flex-direction:column;gap:7px;
+    box-shadow:0 6px 14px -10px rgba(18,56,66,.4);
+  }
+  .tab-row{display:flex;gap:6px;}
+  .tab{
+    flex:1 1 0;min-width:0;
+    background:rgba(255,255,255,.82);
+    border:1.5px solid rgba(255,255,255,.9);
+    color:var(--ink-soft);
+    padding:7px 4px;border-radius:12px;
+    font-family:'Gowun Dodum';font-size:.8rem;
+    cursor:pointer;transition:.22s;white-space:nowrap;
+    display:flex;flex-direction:column;align-items:center;justify-content:center;line-height:1.25;gap:1px;
+  }
+  .tab .d{font-weight:700;font-size:.72rem;letter-spacing:.02em;}
+  .tab-menu{flex-direction:row;gap:4px;font-weight:700;font-size:.82rem;}
+  .tab-menu .mi{font-size:1rem;line-height:1;}
+  .tab.active{
+    background:linear-gradient(135deg,#7b6aa8 0%,#6d7ab0 55%,#5e93a8 100%);
+    color:#fff;border-color:rgba(255,255,255,.5);
+    box-shadow:0 5px 14px -4px rgba(95,80,140,.5);
+    transform:translateY(-1px);
+  }
+
+  /* ---- DAY PANELS ---- */
+  .panel{display:none;padding:8px 16px 40px;animation:fade .4s ease;}
+  .panel.active{display:block;}
+  @keyframes fade{from{opacity:0;transform:translateY(10px);}to{opacity:1;transform:none;}}
+
+  .day-head{
+    margin:14px 2px 18px;
+  }
+  .day-head .tag{
+    display:inline-block;background:var(--coral);color:#fff;
+    font-size:.72rem;letter-spacing:.18em;padding:4px 12px;border-radius:20px;
+    font-family:'Gowun Dodum';
+  }
+  .day-head h2{
+    font-size:1.42rem;margin-top:11px;color:var(--sea-deep);line-height:1.35;
+  }
+  .day-head .summary{
+    margin-top:9px;font-size:.9rem;color:var(--ink-soft);
+    background:var(--paper);border-left:4px solid var(--gold);
+    padding:11px 14px;border-radius:0 10px 10px 0;
+  }
+
+  /* ---- TIMELINE ---- */
+  .timeline{position:relative;margin-left:8px;padding-left:24px;}
+  .timeline::before{
+    content:"";position:absolute;left:5px;top:6px;bottom:14px;width:2px;
+    background:linear-gradient(var(--sea-light),var(--sand-deep));
+  }
+  .stop{position:relative;margin-bottom:18px;}
+  .stop::before{
+    content:"";position:absolute;left:-24px;top:5px;width:12px;height:12px;
+    border-radius:50%;background:var(--coral);border:3px solid var(--sand);
+    box-shadow:0 0 0 2px var(--coral-soft);
+  }
+  .stop .time{font-family:'Gowun Batang';font-weight:700;color:var(--sea);font-size:.82rem;letter-spacing:.03em;}
+  .card{
+    background:var(--paper);border-radius:14px;padding:14px 15px;margin-top:6px;
+    box-shadow:0 3px 12px rgba(18,56,66,.07);
+    border:1px solid rgba(232,220,200,.7);
+  }
+  .card h3{font-size:1.04rem;color:var(--ink);margin-bottom:4px;}
+  .card h3 .h3ic{font-size:1rem;margin-right:2px;}
+  .card p{font-size:.87rem;color:var(--ink-soft);}
+  .card .meta{
+    margin-top:9px;display:flex;gap:8px;flex-wrap:wrap;
+  }
+  .pill{
+    font-size:.74rem;padding:4px 10px;border-radius:18px;
+    background:var(--sand-deep);color:var(--sea-deep);
+    font-family:'Gowun Dodum';
+  }
+  .pill.kid{background:#fbe3d6;color:var(--coral);}
+  .pill.tip{background:#e2efe5;color:var(--leaf);}
+  /* 일정 종류별 색상 */
+  .pill.food{background:#fde4d4;color:#c75b34;}       /* 식사: 주황 */
+  .pill.sight{background:#dcebf7;color:#2f6fa0;}      /* 관광: 파랑 */
+  .pill.move{background:#e7e2f3;color:#6a55a8;}       /* 이동: 보라 */
+  .pill.stay{background:#e2efe5;color:#3f7a55;}       /* 숙소/체크인: 초록 */
+  .pill.rest{background:#fdeecf;color:#a9791a;}       /* 휴식/온천: 골드 */
+  /* 종류별 카드 왼쪽 색띠 + 타임라인 점 색 */
+  .stop.k-food .card{border-left:4px solid #e58a5a;}
+  .stop.k-sight .card{border-left:4px solid #5a93c4;}
+  .stop.k-move .card{border-left:4px solid #8a76c4;}
+  .stop.k-stay .card{border-left:4px solid #5fa276;}
+  .stop.k-rest .card{border-left:4px solid #d6a843;}
+  .stop.k-food::before{background:#e58a5a;box-shadow:0 0 0 2px #f3c2a8;}
+  .stop.k-sight::before{background:#5a93c4;box-shadow:0 0 0 2px #b8d4ea;}
+  .stop.k-move::before{background:#8a76c4;box-shadow:0 0 0 2px #cabfe6;}
+  .stop.k-stay::before{background:#5fa276;box-shadow:0 0 0 2px #bdddc8;}
+  .stop.k-rest::before{background:#d6a843;box-shadow:0 0 0 2px #ecd5a0;}
+
+  /* ===== 지금 진행 중 표시 ===== */
+  .stop.now .card{
+    box-shadow:0 0 0 2px var(--coral),0 6px 20px rgba(224,120,86,.28);
+    animation:nowGlow 2s ease-in-out infinite;
+  }
+  @keyframes nowGlow{
+    0%,100%{box-shadow:0 0 0 2px var(--coral),0 6px 20px rgba(224,120,86,.22);}
+    50%{box-shadow:0 0 0 2px var(--coral),0 6px 26px rgba(224,120,86,.5);}
+  }
+  .now-badge{
+    display:inline-flex;align-items:center;gap:6px;
+    background:var(--coral);color:#fff;font-size:.72rem;font-family:'Gowun Dodum';
+    padding:3px 10px 3px 8px;border-radius:18px;margin-bottom:7px;
+  }
+  .now-badge .mover{font-size:.95rem;animation:walk 1.1s steps(2,end) infinite;}
+  @keyframes walk{0%{transform:translateX(0);}50%{transform:translateX(3px);}100%{transform:translateX(0);}}
+  .now-badge .dot{width:7px;height:7px;border-radius:50%;background:#fff;animation:blink 1.2s infinite;}
+  @keyframes blink{0%,100%{opacity:1;}50%{opacity:.25;}}
+  .stop.now::before{
+    background:var(--coral)!important;
+    box-shadow:0 0 0 3px rgba(224,120,86,.35)!important;
+    animation:nowDot 1.4s ease-in-out infinite;
+  }
+  @keyframes nowDot{0%,100%{box-shadow:0 0 0 3px rgba(224,120,86,.3);}50%{box-shadow:0 0 0 6px rgba(224,120,86,.12);}}
+  .stop.done{opacity:.55;}
+  .stop.done .time::after{content:" ✓";color:var(--leaf);font-size:.75rem;}
+  /* 오늘 안내 띠 */
+  .today-banner{
+    display:none;margin:14px 16px 0;padding:11px 14px;border-radius:12px;
+    background:linear-gradient(135deg,var(--coral),var(--coral-soft));color:#fff;
+    font-size:.86rem;font-family:'Gowun Dodum';align-items:center;gap:9px;
+  }
+  .today-banner.show{display:flex;}
+  .today-banner .bic{font-size:1.3rem;animation:walk 1.1s steps(2,end) infinite;}
+  .btn-row{margin-top:11px;display:flex;gap:8px;flex-wrap:wrap;}
+  .mapbtn{
+    display:inline-flex;align-items:center;gap:5px;
+    background:var(--sea);color:#fff;text-decoration:none;
+    font-size:.78rem;padding:7px 13px;border-radius:10px;
+    font-family:'Gowun Dodum';transition:.2s;
+  }
+  .mapbtn:active{transform:scale(.95);background:var(--sea-deep);}
+  .mapbtn.ghost{background:transparent;color:var(--sea);border:1.5px solid var(--sea);}
+
+  /* ---- INFO SECTIONS (food / stay / tips) ---- */
+  .sec-title{
+    font-size:1.32rem;color:var(--sea-deep);margin:8px 2px 6px;
+    display:flex;align-items:center;gap:9px;
+  }
+  .sec-title .ic{font-size:1.3rem;}
+  .sec-intro{font-size:.88rem;color:var(--ink-soft);margin:0 2px 16px;}
+  .group-label{
+    font-family:'Gowun Batang';font-weight:700;color:var(--coral);
+    font-size:.96rem;margin:18px 2px 9px;display:flex;align-items:center;gap:7px;
+  }
+  .group-label::before{content:"";width:18px;height:2px;background:var(--coral);}
+
+  .food, .stay{
+    background:var(--paper);border-radius:14px;margin-bottom:13px;
+    box-shadow:0 3px 12px rgba(18,56,66,.06);border:1px solid rgba(232,220,200,.7);
+    overflow:hidden;
+  }
+  .place-img{
+    width:100%;height:150px;object-fit:cover;display:block;
+    background:var(--sand-deep);
+  }
+  .place-body{padding:13px 15px;}
+  .food h3,.stay h3{font-size:1.04rem;margin-bottom:3px;}
+  .food .k,.stay .k{font-size:.8rem;color:var(--coral);font-family:'Gowun Dodum';margin-bottom:5px;}
+  .food p,.stay p{font-size:.85rem;color:var(--ink-soft);}
+  .stay .rec{
+    display:inline-block;margin-top:9px;font-size:.75rem;
+    background:#e2efe5;color:var(--leaf);padding:4px 11px;border-radius:18px;
+  }
+  .stay .rec.best{background:var(--gold);color:#fff;}
+
+  .note{
+    background:linear-gradient(135deg,#fff4ec,#fbe9dd);
+    border:1px solid var(--coral-soft);
+    border-radius:14px;padding:15px 16px;margin:6px 2px 16px;
+  }
+  .note b{color:var(--coral);font-family:'Gowun Batang';}
+  .note p{font-size:.87rem;color:#7a4a38;margin-top:3px;}
+
+  /* ===== 날씨 ===== */
+  .wx-city{
+    background:var(--paper);border-radius:16px;margin-bottom:16px;overflow:hidden;
+    box-shadow:0 3px 14px rgba(18,56,66,.08);border:1px solid rgba(232,220,200,.7);
+  }
+  .wx-now{
+    display:flex;align-items:center;gap:14px;padding:16px 18px;
+    background:linear-gradient(135deg,var(--sea),var(--sea-light));color:#fff;
+  }
+  .wx-now .ic{font-size:2.8rem;line-height:1;}
+  .wx-now .temp{font-family:'Gowun Batang',serif;font-weight:700;font-size:2.1rem;line-height:1;}
+  .wx-now .meta{flex:1;}
+  .wx-now .city{font-size:1.05rem;font-weight:700;margin-bottom:2px;}
+  .wx-now .desc{font-size:.82rem;opacity:.92;}
+  .wx-now .sub{font-size:.76rem;opacity:.8;margin-top:3px;}
+  .wx-week{display:flex;justify-content:space-between;padding:12px 8px 14px;gap:2px;}
+  .wx-day{flex:1;text-align:center;display:flex;flex-direction:column;align-items:center;gap:3px;}
+  .wx-day .dn{font-size:.72rem;color:var(--ink-soft);}
+  .wx-day .di{font-size:1.35rem;line-height:1;}
+  .wx-day .dh{font-size:.78rem;font-weight:700;color:var(--ink);}
+  .wx-day .dl{font-size:.72rem;color:var(--ink-soft);}
+  .wx-day .dp{font-size:.64rem;color:var(--sea-light);}
+  .wx-day.today{background:var(--sand);border-radius:10px;padding:4px 0;}
+  .wx-loading,.wx-error{padding:22px;text-align:center;color:var(--ink-soft);font-size:.88rem;}
+  .wx-updated{text-align:center;font-size:.72rem;color:var(--ink-soft);margin:2px 0 14px;opacity:.8;}
+
+  /* ===== 상시 날씨 바 (hero 아래 영역) ===== */
+  .wxbar{
+    position:relative;
+    display:flex;flex-direction:column;gap:10px;
+    padding:6px 14px 18px;
+    background:transparent;
+  }
+  .wxbar-row{
+    display:flex;gap:8px;overflow-x:auto;scrollbar-width:none;
+  }
+  .wxbar-row::-webkit-scrollbar{display:none;}
+  .wxbar::-webkit-scrollbar{display:none;}
+  .wxbar-item{
+    flex:1 1 0;min-width:0;display:flex;align-items:center;justify-content:center;gap:8px;
+    background:rgba(255,255,255,.18);border:1px solid rgba(255,255,255,.26);
+    border-radius:13px;padding:9px 10px;color:#fff;backdrop-filter:blur(4px);
+  }
+  .wxbar-item .ic{font-size:1.5rem;line-height:1;}
+  .wxbar-item .c{font-size:.74rem;opacity:.9;line-height:1.2;}
+  .wxbar-item .t{font-family:'Gowun Batang',serif;font-weight:700;font-size:1.15rem;line-height:1.1;}
+  /* 일주일 요약 한 줄 */
+  .wxbar-week{
+    display:flex;align-items:center;justify-content:center;gap:7px;flex-wrap:wrap;
+    background:rgba(255,255,255,.14);border:1px solid rgba(255,255,255,.22);
+    border-radius:11px;padding:7px 12px;color:#fff;font-size:.78rem;backdrop-filter:blur(4px);
+  }
+  .wxbar-week .wk-ic{font-size:1rem;}
+  .wxbar-week .wk-sep{opacity:.5;}
+  .wxbar-loading{color:#fff;font-size:.8rem;padding:11px 14px;opacity:.95;}
+
+  .legend-bar{
+    text-align:center;color:var(--sea-deep);font-size:.8rem;font-weight:700;
+    background:rgba(255,255,255,.6);border-radius:12px;padding:8px 12px;margin:0 2px 10px;
+  }
+  #routeMap{
+    height:420px;border-radius:16px;margin:0 2px 12px;
+    box-shadow:0 4px 16px rgba(18,56,66,.15);
+    background:#cfe3e8;z-index:1;
+  }
+  .leaflet-container{border-radius:16px;font-family:'Gowun Dodum',sans-serif;}
+  .rmpin{
+    background:var(--coral);color:#fff;font-weight:700;font-size:.82rem;
+    width:26px;height:26px;border-radius:50% 50% 50% 0;transform:rotate(-45deg);
+    display:flex;align-items:center;justify-content:center;
+    box-shadow:0 2px 6px rgba(0,0,0,.3);border:2px solid #fff;
+  }
+  .rmpin span{transform:rotate(45deg);}
+  .rmpin.start{background:var(--sea);}
+
+  /* ===== 환율 계산기 ===== */
+  .fx-card{
+    background:var(--paper);border-radius:16px;padding:18px;margin:0 2px 14px;
+    box-shadow:0 3px 14px rgba(18,56,66,.08);border:1px solid rgba(232,220,200,.7);
+  }
+  .fx-rate{text-align:center;font-size:.84rem;color:var(--ink-soft);margin-bottom:14px;}
+  .fx-rate b{color:var(--coral);font-family:'Gowun Batang';}
+  .fx-row{display:flex;align-items:center;gap:10px;margin-bottom:10px;}
+  .fx-row label{flex:0 0 54px;font-size:.92rem;font-weight:700;color:var(--sea-deep);}
+  .fx-row .cur{flex:0 0 40px;font-size:.82rem;color:var(--ink-soft);text-align:right;}
+  .fx-input{
+    flex:1;min-width:0;font-size:1.25rem;font-family:'Gowun Batang',serif;
+    padding:10px 12px;border:1.5px solid var(--sand-deep);border-radius:11px;
+    background:#fff;color:var(--ink);text-align:right;
+  }
+  .fx-input:focus{outline:none;border-color:var(--sea-light);}
+  .fx-swap{text-align:center;color:var(--sea-light);font-size:1.2rem;margin:2px 0;}
+  .fx-quick{display:flex;gap:7px;flex-wrap:wrap;margin-top:12px;justify-content:center;}
+  .fx-chip{
+    background:var(--sand-deep);color:var(--sea-deep);border:none;cursor:pointer;
+    font-size:.8rem;padding:7px 13px;border-radius:18px;font-family:'Gowun Dodum';
+  }
+  .fx-chip:active{transform:scale(.95);background:var(--sea);color:#fff;}
+  .fx-chip.on{background:var(--sea);color:#fff;}
+  .fx-note{font-size:.76rem;color:var(--ink-soft);text-align:center;margin-top:12px;opacity:.85;}
+
+  /* ===== 동선 탭 링크 버튼 ===== */
+  .route-links{text-align:center;margin:4px 2px 8px;}
+  .route-links .mapbtn{display:inline-block;}
+
+  .check{
+    background:var(--paper);border-radius:16px;padding:4px 14px;margin:0 2px 14px;
+    box-shadow:0 3px 14px rgba(18,56,66,.08);border:1px solid rgba(232,220,200,.7);
+  }
+  .check label{
+    display:flex;align-items:flex-start;gap:11px;padding:11px 9px;
+    border-bottom:1px solid var(--sand);cursor:pointer;font-size:.9rem;
+  }
+  .check label:last-child{border-bottom:none;}
+  .check input{
+    appearance:none;-webkit-appearance:none;flex:0 0 auto;
+    width:21px;height:21px;border:2px solid var(--sea-light);border-radius:6px;
+    margin-top:2px;transition:.18s;position:relative;cursor:pointer;
+  }
+  .check input:checked{background:var(--leaf);border-color:var(--leaf);}
+  .check input:checked::after{
+    content:"✓";position:absolute;color:#fff;font-size:.82rem;
+    left:3px;top:-1px;font-weight:700;
+  }
+  .check input:checked + span{color:var(--ink-soft);text-decoration:line-through;}
+
+  footer{
+    text-align:center;padding:30px 20px 40px;color:var(--ink-soft);font-size:.82rem;
+  }
+  footer .heart{color:var(--coral);}
+  .divider{height:1px;background:var(--sand-deep);margin:22px 16px;opacity:.6;}
+
+  /* ===== 작은 휴대폰 화면 최적화 (≤380px) ===== */
+  @media (max-width:380px){
+    #landing h1{font-size:2.3rem;}
+    .land-sub{font-size:.96rem;}
+    .photo-wrap,.land-photo{width:180px;height:180px;}
+    .flightmap{width:240px;height:140px;}
+    .go-btn{width:96px;height:96px;font-size:1.5rem;margin-top:34px;}
+    .tab{padding:6px 2px;font-size:.72rem;}
+    .tab .d{font-size:.64rem;}
+    .tab-menu{font-size:.72rem;gap:2px;}
+    .tab-menu .mi{font-size:.9rem;}
+    .day-head h2{font-size:1.28rem;}
+    .sec-title{font-size:1.2rem;}
+    .wx-now .temp{font-size:1.8rem;}
+    .wx-now .ic{font-size:2.4rem;}
+    .wx-day .di{font-size:1.15rem;}
+    .wx-day .dn{font-size:.66rem;}
+    .wx-day .dp{font-size:.58rem;}
+    .wxbar-item{padding:7px 5px;gap:5px;}
+    .wxbar-item .ic{font-size:1.25rem;}
+    .wxbar-item .c{font-size:.66rem;}
+    .wxbar-item .t{font-size:1rem;}
+    .wxbar-week{font-size:.7rem;gap:5px;}
+  }
+  /* 터치 영역·가독성 공통 */
+  @media (max-width:560px){
+    .mapbtn{padding:9px 15px;}   /* 손가락 터치 쉽게 */
+    .tabs{padding-left:12px;padding-right:12px;}
+    body{font-size:16px;}        /* iOS 입력 확대 방지 기준 */
+  }
+  /* 가로 모드에서도 표지 안정 */
+  @media (max-height:560px) and (orientation:landscape){
+    #landing{justify-content:flex-start;padding-top:24px;overflow-y:auto;}
+    .photo-wrap,.land-photo{width:120px;height:120px;}
+    .flightmap{height:90px;}
+  }
+  /* 움직임 최소화 선호 사용자 배려 */
+  @media (prefers-reduced-motion:reduce){
+    *{animation-duration:.001s!important;animation-iteration-count:1!important;}
+  }
+
+  /* ===== 귀여운 파스텔 테마 보정 (candy) ===== */
+  #landing, .hero{ color:#5a4a52; }
+  #landing h1, .hero h1{ text-shadow:none; color:#4a3a44; }
+  #landing h1 .accent{ color:#ff7faa; }
+  .hero .eyebrow, .land-eyebrow{ color:#9a7f8c; }
+  .hero .dates, .land-dates{
+    background:rgba(255,255,255,.55);
+    border:1px solid rgba(255,255,255,.9);
+    color:#5a4a52;
+  }
+  .dday{ background:rgba(255,255,255,.5); border:1px solid rgba(255,255,255,.85); }
+  .dday .num{ color:#ff7faa; }
+  .go-btn{ background:linear-gradient(135deg,#ff5e93,#ff9d6b); color:#fff; border:3px solid rgba(255,255,255,.85); box-shadow:0 10px 26px -6px rgba(255,94,147,.7); }
+  .wxbar-item, .wxbar-week{ color:#5a4a52; background:rgba(255,255,255,.6); border-color:rgba(255,255,255,.9); }
+  .tab.active{
+    background:linear-gradient(135deg,#ff7faa,#ffc4d8);
+    color:#fff;border-color:rgba(255,255,255,.7);
+    box-shadow:0 5px 14px -4px #ff7faa;
+  }
+  .group-label{ color:#ff7faa; }
+  .group-label::before{ background:#ff7faa; }
+  /* 둥글둥글 더 귀엽게 */
+  .tab{ border-radius:16px; }
+  .card, .food, .stay{ border-radius:18px; }
+  /* 떠다니는 장식 */
+  .cute-deco{ position:fixed; inset:0; pointer-events:none; z-index:0; overflow:hidden; }
+  .cute-deco span{ position:absolute; font-size:1.3rem; opacity:.5; animation:floatY 6s ease-in-out infinite; }
+  @keyframes floatY{ 0%,100%{ transform:translateY(0) rotate(0deg); } 50%{ transform:translateY(-14px) rotate(8deg); } }
+</style>
+</head>
+<body class="locked">
+
+<!-- ===== LANDING (표지) ===== -->
+<div class="cute-deco" aria-hidden="true">
+  <span style="left:8%;top:14%;animation-delay:0s">☁️</span>
+  <span style="left:86%;top:22%;animation-delay:1.2s">⭐</span>
+  <span style="left:12%;top:55%;animation-delay:2.1s">🌸</span>
+  <span style="left:80%;top:62%;animation-delay:.6s">☁️</span>
+  <span style="left:46%;top:8%;animation-delay:1.8s">💛</span>
+  <span style="left:90%;top:84%;animation-delay:2.6s">🌷</span>
+</div>
+<div id="landing">
+  <div class="sun"></div>
+  <div class="stars" id="stars"></div>
+  <div class="shoot sh1"></div>
+  <div class="shoot sh2"></div>
+  <div class="cloud c1"></div>
+  <div class="cloud c2"></div>
+  <div class="bubble b1"></div>
+  <div class="bubble b2"></div>
+  <div class="bubble b3"></div>
+  <div class="reflect"></div>
+
+  <!-- 다중 파도 -->
+  <div class="waves">
+    <svg class="wave1" viewBox="0 0 1440 120" preserveAspectRatio="none"><path d="M0,60 C240,110 480,10 720,60 C960,110 1200,10 1440,60 L1440,120 L0,120 Z"/></svg>
+    <svg class="wave2" viewBox="0 0 1440 120" preserveAspectRatio="none"><path d="M0,70 C240,30 480,110 720,70 C960,30 1200,110 1440,70 L1440,120 L0,120 Z"/></svg>
+    <svg class="wave3" viewBox="0 0 1440 120" preserveAspectRatio="none"><path d="M0,85 C240,120 480,55 720,85 C960,115 1200,60 1440,90 L1440,120 L0,120 Z"/></svg>
+  </div>
+
+  <div class="land-inner">
+    <div class="land-eyebrow">Family Trip · Kyushu</div>
+
+    <!-- 인천 → 후쿠오카 비행 애니메이션 -->
+    <div class="flightmap">
+      <svg viewBox="0 0 280 160" xmlns="http://www.w3.org/2000/svg">
+        <!-- 한반도(간략) -->
+        <path class="fm-land" d="M44,18 C58,14 70,22 68,38 C80,42 78,58 66,64 C72,76 60,92 50,86 C44,98 32,92 36,80 C26,76 28,60 38,58 C30,48 34,30 44,18 Z"/>
+        <!-- 규슈(간략) -->
+        <path class="fm-land" d="M214,104 C226,100 236,108 232,120 C242,124 238,138 228,136 C226,148 212,146 212,136 C202,138 198,124 208,120 C202,112 206,104 214,104 Z"/>
+        <!-- 비행 경로 -->
+        <path id="flyline" class="fm-path" d="M58,52 Q140,30 222,118"/>
+        <!-- 출발/도착 점 -->
+        <circle class="fm-dot-pulse" cx="58" cy="52" r="4"/>
+        <circle class="fm-dot" cx="58" cy="52" r="3.5"/>
+        <circle class="fm-dot-pulse" cx="222" cy="118" r="4"/>
+        <circle class="fm-dot" cx="222" cy="118" r="3.5"/>
+        <!-- 라벨 -->
+        <text class="fm-label" x="40" y="44" text-anchor="middle"><tspan class="fm-flag">🇰🇷</tspan> 인천</text>
+        <text class="fm-label" x="232" y="138" text-anchor="middle">후쿠오카 <tspan class="fm-flag">🇯🇵</tspan></text>
+        <!-- 비행기 (경로 따라 이동) -->
+        <text class="fm-plane" style="offset-path:path('M58,52 Q140,30 222,118');offset-rotate:auto;">✈️</text>
+      </svg>
+    </div>
+
+    <h1>2026 여름<br><span class="accent">큐슈 한 바퀴</span></h1>
+    <div class="land-sub">후쿠오카 · 우레시노 · 나가사키</div>
+    <div class="land-dates">2026. 6. 22 (월) – 6. 26 (금) · 4박 5일</div>
+    <div class="land-who">김요한 · 김시은 · 남연순 · 김지아</div>
+    <div class="dday" id="dday"><span class="lab">출발까지</span><span class="num" id="ddayNum">D-?</span></div>
+    <button class="go-btn" id="goBtn">GO</button>
+    <div class="go-hint">눌러서 일정 보기</div>
+  </div>
+</div>
+
+
+<header class="hero">
+  <svg class="wave" viewBox="0 0 100 100" preserveAspectRatio="none">
+    <path d="M0,55 Q25,40 50,55 T100,55 L100,100 L0,100 Z" fill="#fff"/>
+    <path d="M0,68 Q25,53 50,68 T100,68 L100,100 L0,100 Z" fill="#fff"/>
+  </svg>
+  <div class="eyebrow">Family Trip · Kyushu</div>
+  <h1 id="heroTitle" title="메인으로 돌아가기">2026 여름<br>큐슈 한 바퀴</h1>
+  <div class="sub">후쿠오카 · 우레시노 · 나가사키</div>
+  <div class="dates">2026. 6. 22 (월) – 6. 26 (금) · 4박 5일</div>
+  <div class="who">김요한 · 김시은 · 남연순 · 김지아</div>
+</header>
+
+<div class="wxbar" id="wxbar"><div class="wxbar-loading">날씨 불러오는 중… ⛅</div></div>
+
+<nav class="tabs" id="tabs">
+  <div class="tab-row tab-row-days">
+    <div class="tab active" data-tab="d1"><span class="d">DAY 1</span>6/22</div>
+    <div class="tab" data-tab="d2"><span class="d">DAY 2</span>6/23</div>
+    <div class="tab" data-tab="d3"><span class="d">DAY 3</span>6/24</div>
+    <div class="tab" data-tab="d4"><span class="d">DAY 4</span>6/25</div>
+    <div class="tab" data-tab="d5"><span class="d">DAY 5</span>6/26</div>
+  </div>
+  <div class="tab-row tab-row-menu">
+    <div class="tab tab-menu" data-tab="food"><span class="mi">🍜</span>맛집</div>
+    <div class="tab tab-menu" data-tab="shop"><span class="mi">🛍️</span>쇼핑</div>
+    <div class="tab tab-menu" data-tab="stay"><span class="mi">🏨</span>숙소</div>
+    <div class="tab tab-menu" data-tab="weather"><span class="mi">🌤️</span>날씨</div>
+    <div class="tab tab-menu" data-tab="money"><span class="mi">💴</span>환율</div>
+    <div class="tab tab-menu" data-tab="route"><span class="mi">🗺️</span>동선</div>
+    <div class="tab tab-menu" data-tab="tips"><span class="mi">✓</span>준비물</div>
+  </div>
+</nav>
+
+<div class="today-banner" id="todayBanner"></div>
+
+
+<!-- DAY 1 -->
+<section class="panel active" id="d1">
+  <div class="day-head">
+    <span class="tag">DAY 1 · 도착</span>
+    <h2>후쿠오카 도착 → 우레시노 온천</h2>
+    <div class="summary">공항에서 노코노시마·캐널시티를 가볍게 즐기고, 저녁엔 우레시노 료칸에서 첫날 피로를 풉니다.</div>
+  </div>
+  <div class="timeline">
+    <div class="stop k-move" data-start="2026-06-22T10:20:00"><div class="time">10:20</div>
+      <div class="card"><h3><span class="h3ic">✈️</span> 후쿠오카 공항 도착</h3>
+        <p>입국 수속 → 렌터카 수령. 6세용 카시트 사전 예약 꼭 확인!</p>
+        <div class="meta"><span class="pill move">🚗 렌터카 수령</span></div>
+        <div class="btn-row"><a class="mapbtn" target="_blank" href="https://maps.google.com/?q=Fukuoka+Airport">🗺️ 지도</a></div>
+      </div></div>
+    <div class="stop k-food" data-start="2026-06-22T12:30:00"><div class="time">12:30</div>
+      <div class="card"><h3><span class="h3ic">🍽️</span> 점심 · 하카타 라멘 / 모츠나베</h3>
+        <p>도착 첫 끼는 후쿠오카 명물로.</p>
+        <div class="meta"><span class="pill food">🍽️ 맛집</span></div>
+      </div></div>
+    <div class="stop k-sight" data-start="2026-06-22T13:30:00"><div class="time">13:30</div>
+      <div class="card"><h3><span class="h3ic">📸</span> 노코노시마 아일랜드 파크</h3>
+        <p>하카타항에서 배로 약 10분, 꽃밭과 바다가 어우러진 가족 나들이 명소. 6월엔 수국·해바라기가 한창이고, 동물 먹이주기·잔디 광장 등 아이가 좋아할 거리가 많아요. 어르신도 천천히 산책하기 좋습니다.</p>
+        <div class="meta"><span class="pill kid">아이 추천</span><span class="pill tip">꽃·바다 산책</span></div>
+        <div class="btn-row"><a class="mapbtn" target="_blank" href="https://maps.google.com/?q=Nokonoshima+Island+Park">🗺️ 지도</a></div>
+      </div></div>
+    <div class="stop k-sight" data-start="2026-06-22T15:30:00"><div class="time">15:30</div>
+      <div class="card"><h3><span class="h3ic">📸</span> 캐널시티 하카타</h3>
+        <p>실내 쇼핑몰 + 분수쇼. 비 와도 OK, 아이 놀거리 풍부.</p>
+        <div class="meta"><span class="pill kid">아이 추천</span><span class="pill tip">우천 OK</span></div>
+        <div class="btn-row"><a class="mapbtn" target="_blank" href="https://maps.google.com/?q=Canal+City+Hakata">🗺️ 지도</a></div>
+      </div></div>
+    <div class="stop k-move" data-start="2026-06-22T17:30:00"><div class="time">17:30</div>
+      <div class="card"><h3><span class="h3ic">🚗</span> 우레시노로 이동 (약 1시간)</h3>
+        <p>이른 저녁 식사 후 출발. 료칸 가이세키 저녁은 예약 시간이 고정이니 늦으면 시내에서 먹고 들어가도 됩니다.</p>
+      </div></div>
+    <div class="stop k-stay" data-start="2026-06-22T19:00:00"><div class="time">19:00</div>
+      <div class="card"><h3><span class="h3ic">🏨</span> 우레시노 료칸 체크인 ♨️</h3>
+        <p>일본 3대 미인탕. 부드러운 온천수에 몸 풀고 가이세키 저녁, 휴식.</p>
+        <div class="meta"><span class="pill rest">♨️ 온천</span><span class="pill rest">1박 2식</span></div>
+        <div class="btn-row"><a class="mapbtn" target="_blank" href="https://maps.google.com/?q=Ureshino+Onsen">🗺️ 지도</a></div>
+      </div></div>
+  </div>
+</section>
+
+<!-- DAY 2 -->
+<section class="panel" id="d2">
+  <div class="day-head">
+    <span class="tag">DAY 2 · 펭귄</span>
+    <h2>우레시노 → 나가사키</h2>
+    <div class="summary">아침 온천을 한 번 더 즐기고 나가사키로. 따님이 가장 좋아할 펭귄 수족관이 오늘의 하이라이트!</div>
+  </div>
+  <div class="timeline">
+    <div class="stop k-food" data-start="2026-06-23T10:00:00"><div class="time">~10:00</div>
+      <div class="card"><h3><span class="h3ic">🍽️</span> 료칸 조식 + 아침 온천</h3>
+        <p>온천 두부 조식 후 한 번 더 온천을 즐기고 체크아웃.</p></div></div>
+    <div class="stop k-sight" data-start="2026-06-23T10:30:00"><div class="time">10:30</div>
+      <div class="card"><h3><span class="h3ic">📸</span> (선택) 미후네야마 라쿠엔</h3>
+        <p>에도 시대 다케오 영주의 별장 정원. 미후네산을 배경으로 한 50만㎡의 숲과 연못, 거목이 어우러진 산책길이 일품입니다. 일정에 여유 없으면 생략 가능.</p>
+        <div class="meta"><span class="pill tip">정원·숲 산책</span></div>
+        <div class="btn-row"><a class="mapbtn ghost" target="_blank" href="https://maps.google.com/?q=Mifuneyama+Rakuen">🗺️ 지도</a></div></div></div>
+    <div class="stop k-food" data-start="2026-06-23T12:30:00"><div class="time">12:30</div>
+      <div class="card"><h3><span class="h3ic">🍽️</span> 점심 · 나가사키 짬뽕 / 사라우동</h3>
+        <p>나가사키 대표 명물. 차이나타운 일대에 명점 다수.</p>
+        <div class="meta"><span class="pill food">🍽️ 맛집</span></div></div></div>
+    <div class="stop k-sight" data-start="2026-06-23T14:00:00"><div class="time">14:00</div>
+      <div class="card"><h3><span class="h3ic">📸</span> 나가사키 펭귄 수족관 🐧</h3>
+        <p>일본 최다 9종 펭귄(약 170마리). 깊이 4m 수조의 헤엄치는 펭귄! 실내 위주라 비 와도 OK.</p>
+        <div class="meta"><span class="pill kid">아이 1순위</span><span class="pill">어른 520엔 / 아이 310엔</span><span class="pill tip">현금만</span></div>
+        <div class="btn-row"><a class="mapbtn" target="_blank" href="https://maps.google.com/?q=Nagasaki+Penguin+Aquarium">🗺️ 지도</a></div></div></div>
+    <div class="stop k-stay" data-start="2026-06-23T17:00:00"><div class="time">17:00</div>
+      <div class="card"><h3><span class="h3ic">🏨</span> 나가사키 시내 호텔 체크인</h3>
+        <p>2박 머무는 베이스. 차이나타운·아케이드 인근이 편리.</p></div></div>
+    <div class="stop k-rest" data-start="2026-06-23T19:00:00"><div class="time">19:00</div>
+      <div class="card"><h3><span class="h3ic">♨️</span> (맑으면) 이나사야마 야경</h3>
+        <p>세계 신 3대 야경. 로프웨이로 정상까지.</p>
+        <div class="meta"><span class="pill tip">날씨 확인</span></div>
+        <div class="btn-row"><a class="mapbtn ghost" target="_blank" href="https://maps.google.com/?q=Mount+Inasa">🗺️ 지도</a></div></div></div>
+  </div>
+</section>
+
+<!-- DAY 3 -->
+<section class="panel" id="d3">
+  <div class="day-head">
+    <span class="tag">DAY 3 · 시내</span>
+    <h2>나가사키 시내</h2>
+    <div class="summary">이국적인 나가사키를 여유롭게. 글로버 가든은 에스컬레이터가 있어 편하고, 일본 26성인 기념관은 일본 기독교 순교 역사를 품은 의미 깊은 곳입니다.</div>
+  </div>
+  <div class="timeline">
+    <div class="stop k-sight" data-start="2026-06-24T09:30:00"><div class="time">09:30</div>
+      <div class="card"><h3><span class="h3ic">📸</span> 글로버 가든 (구라바엔)</h3>
+        <p>항구 전망의 서양식 정원. 에스컬레이터 있어 이동 편함.</p>
+        <div class="meta"><span class="pill tip">어르신 편함</span></div>
+        <div class="btn-row"><a class="mapbtn" target="_blank" href="https://maps.google.com/?q=Glover+Garden">🗺️ 지도</a></div></div></div>
+    <div class="stop k-sight" data-start="2026-06-24T11:00:00"><div class="time">11:00</div>
+      <div class="card"><h3><span class="h3ic">📸</span> 일본 26성인 기념관 (니시자카) ✝️</h3>
+        <p>1597년 외국인 선교사 6명과 일본인 신자 20명, 26성인이 순교한 니시자카 언덕에 세워진 기념관입니다. 일본 기독교 전래·박해·잠복·신앙 부활의 역사를 보여주는 귀중한 자료가 전시돼 있고, 바로 옆에 기념 성당이 있습니다. 나가사키역에서 도보로 가깝습니다.</p>
+        <div class="meta"><span class="pill sight">✝️ 순교 성지</span><span class="pill">입장 약 520엔</span></div>
+        <div class="btn-row"><a class="mapbtn" target="_blank" href="https://maps.google.com/?q=Twenty-Six+Martyrs+Museum+Nagasaki">🗺️ 지도</a></div></div></div>
+    <div class="stop k-food" data-start="2026-06-24T12:30:00"><div class="time">12:30</div>
+      <div class="card"><h3><span class="h3ic">🍽️</span> 점심 · 시내 (데지마 인근)</h3>
+        <p>관광 동선 가까운 곳에서.</p></div></div>
+    <div class="stop k-rest" data-start="2026-06-24T14:00:00"><div class="time">14:00</div>
+      <div class="card"><h3><span class="h3ic">♨️</span> 데지마 / 자유 시간</h3>
+        <p>쇄국시대 네덜란드 무역지 복원. 또는 쇼핑·휴식.</p>
+        <div class="btn-row"><a class="mapbtn ghost" target="_blank" href="https://maps.google.com/?q=Dejima+Nagasaki">🗺️ 지도</a></div></div></div>
+    <div class="stop k-food" data-start="2026-06-24T15:00:00"><div class="time">15:00</div>
+      <div class="card"><h3><span class="h3ic">🍽️</span> 쇼켄 본점 · 카스텔라</h3>
+        <p>1681년 창업. 기념품 카스텔라 + 2층 클래식 카페에서 휴식.</p>
+        <div class="meta"><span class="pill food">🍽️ 맛집</span></div>
+        <div class="btn-row"><a class="mapbtn" target="_blank" href="https://maps.google.com/?q=Shooken+Nagasaki">🗺️ 지도</a></div></div></div>
+    <div class="stop k-food" data-start="2026-06-24T18:30:00"><div class="time">저녁</div>
+      <div class="card"><h3><span class="h3ic">🍽️</span> 차이나타운(신치) 또는 시내</h3>
+        <p>나가사키 2박째.</p></div></div>
+  </div>
+</section>
+
+<!-- DAY 4 -->
+<section class="panel" id="d4">
+  <div class="day-head">
+    <span class="tag">DAY 4 · 테마파크</span>
+    <h2>하우스텐보스 → 후쿠오카</h2>
+    <div class="summary">네덜란드풍 테마파크에서 아이와 신나게! 저녁에 후쿠오카로 복귀합니다.</div>
+  </div>
+  <div class="timeline">
+    <div class="stop k-food" data-start="2026-06-25T09:30:00"><div class="time">~09:30</div>
+      <div class="card"><h3><span class="h3ic">🍽️</span> 호텔 조식 후 체크아웃</h3></div></div>
+    <div class="stop k-sight" data-start="2026-06-25T10:00:00"><div class="time">10:00</div>
+      <div class="card"><h3><span class="h3ic">📸</span> 하우스텐보스</h3>
+        <p>꽃·놀이기구·실내 어트랙션 가득. 아이 강력 추천, 실내 시설 많아 우천에도 OK.</p>
+        <div class="meta"><span class="pill kid">아이 추천</span><span class="pill tip">우천 OK</span></div>
+        <div class="btn-row"><a class="mapbtn" target="_blank" href="https://maps.google.com/?q=Huis+Ten+Bosch">🗺️ 지도</a></div></div></div>
+    <div class="stop k-move" data-start="2026-06-25T16:00:00"><div class="time">16:00</div>
+      <div class="card"><h3><span class="h3ic">🚗</span> 후쿠오카로 이동 (약 1시간 40분)</h3></div></div>
+    <div class="stop k-stay" data-start="2026-06-25T18:00:00"><div class="time">18:00</div>
+      <div class="card"><h3><span class="h3ic">🏨</span> 공항 근처 호텔 체크인</h3>
+        <p>마지막 날 새벽 동선 단축을 위해 공항/하카타역 인근으로.</p></div></div>
+    <div class="stop k-food" data-start="2026-06-25T18:30:00"><div class="time">저녁</div>
+      <div class="card"><h3><span class="h3ic">🍽️</span> 못 먹은 후쿠오카 메뉴</h3>
+        <p>야키니쿠 / 회전초밥 / 우동으로 여행 마무리.</p>
+        <div class="meta"><span class="pill food">🍽️ 맛집</span></div></div></div>
+  </div>
+</section>
+
+<!-- DAY 5 -->
+<section class="panel" id="d5">
+  <div class="day-head">
+    <span class="tag">DAY 5 · 출국</span>
+    <h2>후쿠오카 출국</h2>
+    <div class="summary">아침 비행기로 귀국. 렌터카 반납은 출발 2시간 전 여유 있게.</div>
+  </div>
+  <div class="timeline">
+    <div class="stop k-food" data-start="2026-06-26T08:00:00"><div class="time">~08:00</div>
+      <div class="card"><h3><span class="h3ic">🍽️</span> 호텔 조식</h3></div></div>
+    <div class="stop k-move" data-start="2026-06-26T08:30:00"><div class="time">08:30</div>
+      <div class="card"><h3><span class="h3ic">✈️</span> 렌터카 반납</h3>
+        <p>주유 상태(만탱크 반납 조건)와 차량 점검 함께. 출발 2시간 전 도착.</p>
+        <div class="meta"><span class="pill tip">2시간 전</span></div></div></div>
+    <div class="stop k-move" data-start="2026-06-26T10:30:00"><div class="time">10:30</div>
+      <div class="card"><h3><span class="h3ic">🚗</span> 후쿠오카 출발 → 인천</h3>
+        <p>즐거운 여행, 안전하게 귀국! ✈️</p></div></div>
+  </div>
+</section>
+
+<!-- FOOD -->
+<section class="panel" id="food">
+  <div class="sec-title"><span class="ic">🍜</span> 맛집 리스트</div>
+  <p class="sec-intro">동선에 맞춘 검증된 맛집입니다. 인기 라멘집은 대기가 길 수 있으니 식사 시간을 조금 비켜 가면 좋아요.</p>
+
+  <div class="group-label">후쿠오카 (하카타·텐진)</div>
+  <div class="food"><img class="place-img" src="https://lh3.googleusercontent.com/place-photos/AJRVUZOWigXRe1nZxNzBpDCX4mT3hHjmlF8Kw0MID7stUAkP_Cnd11jacx2QLZqr7G5tR4YWqqSgTniZyY4jM35MQbZh1GrXt8D2E92LAHkqKRWHh9BaxgQbSzw9Lx0vzGJLYSUK6TPk5I45akXU0FLOteMq-Q=s4800-w800-h600" alt="신신 (Shin Shin)" loading="lazy" onerror="this.outerHTML='<div class=&quot;place-img&quot; style=&quot;height:96px;display:flex;align-items:center;justify-content:center;font-size:2.4rem;background:linear-gradient(135deg,#1b4d5c,#2e7d8f);&quot;>🍽️</div>'"><div class="place-body"><h3>신신 (Shin Shin)</h3><div class="k">하카타 라멘</div>
+    <p>텐진 인기 라멘. 진하면서 깔끔한 돈코츠, 얇은 면. (수요일 휴무)</p>
+    <div class="btn-row"><a class="mapbtn" target="_blank" href="https://maps.google.com/?q=Shin+Shin+ramen+Tenjin">🗺️ 지도</a></div></div></div>
+  <div class="food"><img class="place-img" src="https://lh3.googleusercontent.com/place-photos/AJRVUZNITCIoDk16C2i_x9hQDtXZ-gsQPeYZadT1QZn5-dPo3GGmRryyPKuPsPe6_uHIupSzEK4WDIlHiC9ePseYoDFhP4w3lFS09icoay0VEFtVyvNw8VX2MRWwVQhb_sHzJcJMjrFcfdQUHGHHpfw=s4800-w800-h600" alt="하카타 잇소 본점" loading="lazy" onerror="this.outerHTML='<div class=&quot;place-img&quot; style=&quot;height:96px;display:flex;align-items:center;justify-content:center;font-size:2.4rem;background:linear-gradient(135deg,#1b4d5c,#2e7d8f);&quot;>🍽️</div>'"><div class="place-body"><h3>하카타 잇소 본점</h3><div class="k">돈코츠 라멘</div>
+    <p>크리미한 거품 국물로 유명. 평일 저녁 대기 짧은 편.</p>
+    <div class="btn-row"><a class="mapbtn" target="_blank" href="https://maps.google.com/?q=Hakata+Issou+Honten">🗺️ 지도</a></div></div></div>
+  <div class="food"><img class="place-img" src="https://lh3.googleusercontent.com/place-photos/AJRVUZOIejRiGZcWul3Wefu2xhMsp-b9NHFSqsrrBlhId2kxxyiw-w8WxKgNRwK6lYrDWuI8w3ZgvUV5QI_1bHXxTqbps_GUx4bwY3GyKLd5usGUOEy7-qz9Ilv-tXisaoYes2pa7u_tGJ-SnYEheg=s4800-w800-h600" alt="라쿠텐치 모츠나베 (하카타역점)" loading="lazy" onerror="this.outerHTML='<div class=&quot;place-img&quot; style=&quot;height:96px;display:flex;align-items:center;justify-content:center;font-size:2.4rem;background:linear-gradient(135deg,#1b4d5c,#2e7d8f);&quot;>🍽️</div>'"><div class="place-body"><h3>라쿠텐치 모츠나베 (하카타역점)</h3><div class="k">모츠나베 (곱창전골)</div>
+    <p>양 푸짐·가성비 좋음(별점 4.8). 예약 권장.</p>
+    <div class="btn-row"><a class="mapbtn" target="_blank" href="https://maps.google.com/?q=Hakata+Motsunabe+Rakutenchi+Hakata+Station">🗺️ 지도</a></div></div></div>
+
+  <div class="group-label">나가사키</div>
+  <div class="food"><div class="place-img" style="height:96px;display:flex;align-items:center;justify-content:center;font-size:2.4rem;background:linear-gradient(135deg,#e07856,#f0a285);">🍜</div><div class="place-body"><h3>나가사키 짬뽕 · 사라우동</h3><div class="k">나가사키 명물</div>
+    <p>차이나타운(신치) 일대에 명점이 많아요.</p>
+    <div class="btn-row"><a class="mapbtn ghost" target="_blank" href="https://maps.google.com/?q=Nagasaki+Shinchi+Chinatown">🗺️ 지도</a></div></div></div>
+  <div class="food"><img class="place-img" src="https://lh3.googleusercontent.com/place-photos/AJRVUZOUkwNjzjCqyLj9h7cTVR2IwJJatCVyiHa7DULsP4VaMSQTdWhbrbTn42LEnOuZcd3v9DI0t0B4mAEfOhGGETZOckvMOpoICHiaTMFf6O581hYEFkHcrggt7oVr2QqYGLuWQBiy3IxBRDOkPtU=s4800-w800-h600" alt="쇼켄 본점" loading="lazy" onerror="this.outerHTML='<div class=&quot;place-img&quot; style=&quot;height:96px;display:flex;align-items:center;justify-content:center;font-size:2.4rem;background:linear-gradient(135deg,#1b4d5c,#2e7d8f);&quot;>🍽️</div>'"><div class="place-body"><h3>쇼켄 본점</h3><div class="k">카스텔라 + 카페</div>
+    <p>1681년 창업. 기념품 카스텔라 + 2층 클래식 카페.</p>
+    <div class="btn-row"><a class="mapbtn" target="_blank" href="https://maps.google.com/?q=Shooken+Nagasaki">🗺️ 지도</a></div></div></div>
+
+  <div class="group-label">우레시노 (료칸 식사)</div>
+  <div class="food"><div class="place-img" style="height:96px;display:flex;align-items:center;justify-content:center;font-size:2.4rem;background:linear-gradient(135deg,#1b7b6b,#5a8a6b);">🍱</div><div class="place-body"><h3>료칸 가이세키 1박 2식</h3><div class="k">저녁 가이세키 + 온천두부 조식</div>
+    <p>근교 온천 마을은 식당이 일찍 닫으니 료칸 식사가 가장 만족도 높아요. 온천수로 만든 온천 두부, 우레시노 녹차도 꼭!</p></div>
+</section>
+
+<!-- SHOP (쇼핑·마트) -->
+<section class="panel" id="shop">
+  <div class="sec-title"><span class="ic">🛍️</span> 쇼핑 & 마트</div>
+  <p class="sec-intro">지역별 쇼핑·마트·기념품 정리입니다. 면세는 보통 한 매장에서 5,000엔 이상 구매 시 여권 지참하면 받을 수 있어요. (주류는 면세 한도가 따로 있으니 주의)</p>
+
+  <div class="group-label">후쿠오카 (하카타·텐진)</div>
+  <div class="food"><div class="place-img" style="height:96px;display:flex;align-items:center;justify-content:center;font-size:2.4rem;background:linear-gradient(135deg,#e07856,#f0a285);">🛒</div><div class="place-body"><h3>돈키호테 텐진 본점</h3><div class="k">대형 할인잡화 · 24시간</div>
+    <p>지하1층~5층 대형 매장. 화장품·약·과자·생활용품·캐릭터 굿즈까지 한 번에. 백화점가(파르코·이와타야) 한가운데라 쇼핑데이로 좋아요. 면세 줄이 기니 낮에 가는 게 편합니다.</p>
+    <div class="btn-row"><a class="mapbtn" target="_blank" href="https://maps.google.com/?q=Don+Quijote+Tenjin+Honten+Fukuoka">🗺️ 지도</a></div></div></div>
+  <div class="food"><div class="place-img" style="height:96px;display:flex;align-items:center;justify-content:center;font-size:2.4rem;background:linear-gradient(135deg,#6b5b8a,#8a7aa8);">🏬</div><div class="place-body"><h3>캐널시티 하카타</h3><div class="k">복합 쇼핑몰 · 분수쇼</div>
+    <p>운하를 낀 대형 쇼핑몰. 디즈니스토어·산리오 등 아이 취향 매장 많고 분수쇼·푸드코트도 있어 가족 쇼핑에 딱. (1일차 일정에도 포함)</p>
+    <div class="btn-row"><a class="mapbtn" target="_blank" href="https://maps.google.com/?q=Canal+City+Hakata">🗺️ 지도</a></div></div></div>
+  <div class="food"><div class="place-img" style="height:96px;display:flex;align-items:center;justify-content:center;font-size:2.4rem;background:linear-gradient(135deg,#3a5a7a,#5a7a9a);">💊</div><div class="place-body"><h3>드럭스토어 (마츠모토키요시·다이코쿠 등)</h3><div class="k">약·화장품 · 하카타역/텐진</div>
+    <p>파스(동전파스·샤론파스), 시트마스크, 감기약, 비타민 등 선물용 인기템. 다이코쿠 드럭은 돈키호테보다 한산해 빠르게 살 수 있어요.</p>
+    <div class="btn-row"><a class="mapbtn ghost" target="_blank" href="https://maps.google.com/?q=drugstore+Hakata+station">🗺️ 지도</a></div></div></div>
+  <div class="food"><div class="place-img" style="height:96px;display:flex;align-items:center;justify-content:center;font-size:2.4rem;background:linear-gradient(135deg,#1b7b6b,#5a8a6b);">🐟</div><div class="place-body"><h3>하카타역 (밍구·데이토스)</h3><div class="k">기념품 · 식료품</div>
+    <p>멘타이코(명란), 히요코 과자, 라멘 선물세트 등 후쿠오카 기념품 총집결. 공항 가기 전 마지막 쇼핑에 편리합니다.</p>
+    <div class="btn-row"><a class="mapbtn" target="_blank" href="https://maps.google.com/?q=Hakata+Station+Deitos">🗺️ 지도</a></div></div></div>
+
+  <div class="group-label">우레시노 · 다케오 · 아리타 (사가현)</div>
+  <div class="food"><div class="place-img" style="height:96px;display:flex;align-items:center;justify-content:center;font-size:2.4rem;background:linear-gradient(135deg,#5a8a6b,#1b7b6b);">🍵</div><div class="place-body"><h3>우레시노 녹차 (차 교류관 등)</h3><div class="k">우레시노 특산 · 녹차</div>
+    <p>우레시노는 일본 손꼽히는 녹차 산지. 녹차·녹차과자·다기를 기념품으로. 차 시음·체험도 가능해요.</p>
+    <div class="btn-row"><a class="mapbtn ghost" target="_blank" href="https://maps.google.com/?q=Ureshino+tea+Saga">🗺️ 지도</a></div></div></div>
+  <div class="food"><div class="place-img" style="height:96px;display:flex;align-items:center;justify-content:center;font-size:2.4rem;background:linear-gradient(135deg,#c8932f,#e0b35a);">🏺</div><div class="place-body"><h3>아리타 도자기 마을</h3><div class="k">아리타야키 · 도자기</div>
+    <p>일본 자기 발상지. 조선 도공 이삼평이 시작한 곳으로 우리와 인연이 깊습니다. 가마(고라쿠 등)에서 그릇 골라담기 체험도 가능. 우레시노에서 차로 가깝습니다.</p>
+    <div class="btn-row"><a class="mapbtn" target="_blank" href="https://maps.google.com/?q=Arita+porcelain+town+Saga">🗺️ 지도</a></div></div></div>
+  <div class="food"><div class="place-img" style="height:96px;display:flex;align-items:center;justify-content:center;font-size:2.4rem;background:linear-gradient(135deg,#3a5a7a,#5a7a9a);">🛒</div><div class="place-body"><h3>현지 슈퍼마켓</h3><div class="k">간식·생수·도시락</div>
+    <p>료칸 들어가기 전 물·간식·아이 도시락 사기 좋아요. 편의점보다 저렴하고 현지 먹거리 구경도 재미있습니다.</p>
+    <div class="btn-row"><a class="mapbtn ghost" target="_blank" href="https://maps.google.com/?q=supermarket+Ureshino">🗺️ 지도</a></div></div></div>
+
+  <div class="group-label">나가사키</div>
+  <div class="food"><div class="place-img" style="height:96px;display:flex;align-items:center;justify-content:center;font-size:2.4rem;background:linear-gradient(135deg,#1b4d5c,#2e7d8f);">🏬</div><div class="place-body"><h3>아뮤플라자 나가사키</h3><div class="k">역 직결 쇼핑몰</div>
+    <p>JR 나가사키역과 바로 연결. '가모메 시장'에 카스텔라·중화과자·해산물 등 나가사키 기념품 27개 점포 집결. 서점·영화관·맛집도 한곳에.</p>
+    <div class="btn-row"><a class="mapbtn" target="_blank" href="https://maps.google.com/?q=Amu+Plaza+Nagasaki">🗺️ 지도</a></div></div></div>
+  <div class="food"><div class="place-img" style="height:96px;display:flex;align-items:center;justify-content:center;font-size:2.4rem;background:linear-gradient(135deg,#e07856,#f0a285);">🏮</div><div class="place-body"><h3>신치 차이나타운</h3><div class="k">중화 거리 · 기념품</div>
+    <p>짬뽕·사라우동 명점과 함께 중화 과자·잡화 쇼핑. 관광과 식사·쇼핑을 한 번에 즐기기 좋아요.</p>
+    <div class="btn-row"><a class="mapbtn" target="_blank" href="https://maps.google.com/?q=Nagasaki+Shinchi+Chinatown">🗺️ 지도</a></div></div></div>
+  <div class="food"><div class="place-img" style="height:96px;display:flex;align-items:center;justify-content:center;font-size:2.4rem;background:linear-gradient(135deg,#6b5b8a,#8a7aa8);">🛒</div><div class="place-body"><h3>돈키호테 나가사키</h3><div class="k">할인잡화 · 늦은 시간</div>
+    <p>시안바시 인근. 늦게까지 영업해 일정 끝나고 들르기 좋고, 데일리 생필품·간식·주류를 가성비 있게 살 수 있어요.</p>
+    <div class="btn-row"><a class="mapbtn ghost" target="_blank" href="https://maps.google.com/?q=Don+Quijote+Nagasaki">🗺️ 지도</a></div></div></div>
+
+  <div class="note">
+    <b>💡 면세·쇼핑 팁</b>
+    <p>① 면세는 한 매장에서 보통 5,000엔(세전) 이상 구매 시, 계산할 때 <b>여권</b>을 제시해야 받을 수 있어요. ② 돈키호테 면세 줄은 길 수 있으니 낮 시간대 추천. ③ 주류는 면세 한도(보통 1인 2L 등)가 따로 있으니 확인하세요. ④ 면세로 산 물건은 봉투를 밀봉해 주며 일본 내에서 개봉하면 안 됩니다.</p>
+  </div>
+</section>
+
+<!-- STAY -->
+<section class="panel" id="stay">
+  <div class="sec-title"><span class="ic">🏨</span> 숙소 추천</div>
+  <p class="sec-intro">너무 비싸지 않은 중급 위주로 골랐습니다. 우레시노만 온천 료칸, 나머지는 합리적인 시티 호텔이에요.</p>
+
+  <div class="group-label">우레시노 온천 · 6/22 (1박)</div>
+  <div class="stay"><img class="place-img" src="https://lh3.googleusercontent.com/place-photos/AJRVUZOOX-iUH_EkB39LrqpQHeCzZatrsqbNsP9KGYoVO6hOM8dVt3faa07L9XElO0CCZ5c5sqGArbXOC_dl068kk-SLt_Wh2dD8TAcE27ZBvlipfrhEHXEJFUfSK8SXSq7bJVY6VGdGrqRS-YD_iZB2teCM_w=s4800-w800-h600" alt="와라쿠엔 (Warakuen)" loading="lazy" onerror="this.outerHTML='<div class=&quot;place-img&quot; style=&quot;height:96px;display:flex;align-items:center;justify-content:center;font-size:2.4rem;background:linear-gradient(135deg,#1b4d5c,#2e7d8f);&quot;>🍽️</div>'"><div class="place-body"><h3>와라쿠엔 (Warakuen)</h3><div class="k">차 테마 료칸 · 미인탕 · 별점 4.3</div>
+    <p>실리카 풍부한 부드러운 온천수, 가족탕·객실 노천탕 선택 가능. 가이세키 평 좋음.</p>
+    <span class="rec best">온천·식사 중시 추천</span>
+    <div class="btn-row"><a class="mapbtn" target="_blank" href="https://maps.google.com/?q=Ryokan+Warakuen+Ureshino">🗺️ 지도</a></div></div></div></div>
+  <div class="stay"><div class="place-img" style="height:96px;display:flex;align-items:center;justify-content:center;font-size:2.4rem;background:linear-gradient(135deg,#2e7d8f,#1b4d5c);">♨️</div><div class="place-body"><h3>쇼엔 (SHOEN)</h3><div class="k">합리적 가격 · 별점 4.1</div>
+    <p>친절한 서비스, 개인 노천탕(전세탕) 운영.</p>
+    <span class="rec">가성비 추천</span>
+    <div class="btn-row"><a class="mapbtn" target="_blank" href="https://maps.google.com/?q=SHOEN+Ureshino">🗺️ 지도</a></div></div></div>
+  <div class="stay"><div class="place-img" style="height:96px;display:flex;align-items:center;justify-content:center;font-size:2.4rem;background:linear-gradient(135deg,#c8932f,#e0b35a);">🧸</div><div class="place-body"><h3>하츠네소 (Hatsunesou)</h3><div class="k">아이 특화 료칸 · 별점 3.7</div>
+    <p>키즈룸·유아식 무료·가족탕. 6세 아이 동반에 최적.</p>
+    <span class="rec">아이 편의 추천</span>
+    <div class="btn-row"><a class="mapbtn" target="_blank" href="https://maps.google.com/?q=Ureshino+Onsen+Hatsunesou">🗺️ 지도</a></div></div></div>
+
+  <div class="group-label">나가사키 · 6/23·24 (2박)</div>
+  <div class="stay"><div class="place-img" style="height:96px;display:flex;align-items:center;justify-content:center;font-size:2.4rem;background:linear-gradient(135deg,#1b4d5c,#2e7d8f);">🏨</div><div class="place-body"><h3>호텔 포르자 나가사키</h3><div class="k">차이나타운 인접 · 별점 4.3</div>
+    <p>아케이드 안이라 비 와도 편함. 넓고 깔끔한 객실, 관광·식사 동선 최고.</p>
+    <span class="rec best">가성비 추천</span>
+    <div class="btn-row"><a class="mapbtn" target="_blank" href="https://maps.google.com/?q=Hotel+Forza+Nagasaki">🗺️ 지도</a></div></div></div>
+  <div class="stay"><div class="place-img" style="height:96px;display:flex;align-items:center;justify-content:center;font-size:2.4rem;background:linear-gradient(135deg,#3a5a7a,#5a7a9a);">🚉</div><div class="place-body"><h3>JR 큐슈 호텔 나가사키</h3><div class="k">나가사키역 직결 · 별점 4.2</div>
+    <p>넓은 객실, 트램 1일권 구매 편리. 교통 편의 최우선이면 이곳.</p>
+    <span class="rec">교통 편의 추천</span>
+    <div class="btn-row"><a class="mapbtn" target="_blank" href="https://maps.google.com/?q=JR+Kyushu+Hotel+Nagasaki">🗺️ 지도</a></div></div></div>
+
+  <div class="group-label">후쿠오카 · 6/25 (1박)</div>
+  <div class="stay"><div class="place-img" style="height:96px;display:flex;align-items:center;justify-content:center;font-size:2.4rem;background:linear-gradient(135deg,#6b5b8a,#8a7aa8);">🛏️</div><div class="place-body"><h3>퀸테사 호텔 후쿠오카 하카타</h3><div class="k">하카타역 도보권 · 별점 3.6</div>
+    <p>셀프 체크인, 코인세탁·무료 음료. 마지막 날 쇼핑·식사 편리.</p>
+    <span class="rec">공항 동선 추천</span>
+    <div class="btn-row"><a class="mapbtn" target="_blank" href="https://maps.google.com/?q=Quintessa+Hotel+Fukuoka+Hakata">🗺️ 지도</a></div></div></div>
+
+  <div class="note">
+    <b>🚗 주차 참고</b>
+    <p>시내 호텔은 자체 주차장이 없고 인근 제휴 주차장(할인)을 쓰는 경우가 많아요. 예약 시 주차 가능 여부와 요금을 꼭 확인하세요.</p>
+  </div>
+</section>
+
+<!-- WEATHER (날씨 단독 탭) -->
+<section class="panel" id="weather">
+  <div class="sec-title"><span class="ic">🌤️</span> 7일 날씨 예보</div>
+  <p class="sec-intro">후쿠오카·우레시노·나가사키 7일 예보입니다. (현재 날씨는 화면 맨 위에 항상 표시돼요.)</p>
+  <div id="wxBox"><div class="wx-loading">날씨를 불러오는 중… ⛅</div></div>
+</section>
+
+<!-- MONEY (환율 계산기 단독 탭) -->
+<section class="panel" id="money">
+  <div class="sec-title"><span class="ic">💴</span> 환율 계산기</div>
+  <p class="sec-intro">엔↔원 실시간 환율로 자동 계산됩니다. 금액을 입력하거나 아래 버튼을 누르면 바로 원화가 표시돼요.</p>
+  <div class="fx-card">
+    <div class="fx-rate" id="fxRate">환율 불러오는 중…</div>
+    <div class="fx-row">
+      <label>일본 🇯🇵</label>
+      <input class="fx-input" id="fxJpy" type="text" inputmode="numeric" placeholder="0" value="1,000">
+      <span class="cur">엔</span>
+    </div>
+    <div class="fx-swap">⇅</div>
+    <div class="fx-row">
+      <label>한국 🇰🇷</label>
+      <input class="fx-input" id="fxKrw" type="text" inputmode="numeric" placeholder="0">
+      <span class="cur">원</span>
+    </div>
+    <div class="fx-quick">
+      <button class="fx-chip" data-jpy="100">100엔</button>
+      <button class="fx-chip" data-jpy="500">500엔</button>
+      <button class="fx-chip" data-jpy="1000">1,000엔</button>
+      <button class="fx-chip" data-jpy="3000">3,000엔</button>
+      <button class="fx-chip" data-jpy="5000">5,000엔</button>
+      <button class="fx-chip" data-jpy="10000">10,000엔</button>
+    </div>
+    <div class="fx-note" id="fxNote">실시간 환율 · 참고용이며 실제 환전 시 수수료가 붙습니다.</div>
+  </div>
+</section>
+
+<!-- ROUTE (전체 동선 단독 탭) -->
+<section class="panel" id="route">
+  <div class="sec-title"><span class="ic">🗺️</span> 전체 동선</div>
+  <p class="sec-intro">인천에서 출발해 큐슈를 도는 여행 경로입니다. 핀을 누르면 장소 이름이 보여요.</p>
+  <div class="legend-bar">인천 ✈️ 후쿠오카 → 우레시노 → 나가사키 → 후쿠오카</div>
+  <div id="routeMap"></div>
+  <div class="route-links">
+    <a class="mapbtn" target="_blank" href="https://www.google.com/maps/dir/Fukuoka+Airport/Ureshino+Onsen/Nagasaki/Hakata+Station">🗺️ 구글 지도에서 길찾기 열기</a>
+  </div>
+</section>
+
+<!-- TIPS -->
+<section class="panel" id="tips">
+  <div class="sec-title"><span class="ic">✓</span> 준비물 체크리스트</div>
+  <p class="sec-intro">탭하면 체크돼요. 가족끼리 출발 전 같이 확인하세요!</p>
+
+  <div class="group-label">렌터카 (가장 중요!)</div>
+  <div class="check">
+    <label><input type="checkbox"><span>국제운전면허증 + 한국 면허증 원본 + 여권 (3종 모두!)</span></label>
+    <label><input type="checkbox"><span>6세용 카시트 — 렌터카 예약 시 사전 신청</span></label>
+    <label><input type="checkbox"><span>하이패스(ETC) 카드 — 고속도로 구간 많음</span></label>
+    <label><input type="checkbox"><span>주유 조건 확인 (만탱크 반납 여부)</span></label>
+  </div>
+
+  <div class="group-label">날씨 & 일반</div>
+  <div class="check">
+    <label><input type="checkbox"><span>우산·우비·여벌 옷 (6월 장마철!)</span></label>
+    <label><input type="checkbox"><span>엔화 현금 (펭귄 수족관 등 현금만 받는 곳)</span></label>
+    <label><input type="checkbox"><span>편한 신발 (나가사키는 언덕·계단 많음)</span></label>
+    <label><input type="checkbox"><span>상비약 — 멀미약, 소화제 등</span></label>
+  </div>
+
+  <div class="group-label">예약 확인</div>
+  <div class="check">
+    <label><input type="checkbox"><span>료칸 — 가족탕 / 침대형 객실 / 늦은 체크인 가능 여부</span></label>
+    <label><input type="checkbox"><span>호텔 — 4인 숙박 가능 / 엑스트라 베드 여부</span></label>
+    <label><input type="checkbox"><span>하우스텐보스 입장권 (온라인 예매 시 할인)</span></label>
+  </div>
+
+  <div class="note">
+    <b>🐧 펭귄 수족관 메모</b>
+    <p>운영 09:00~17:00 · 어른 520엔 / 아이 310엔 · <b>현금만</b> · 주차장 있음. 먹이주기·만지기 체험은 토·일·공휴일만 가능(6/23 화요일은 관람·수영장만).</p>
+  </div>
+</section>
+
+<footer>
+  우리 가족 큐슈 여행 · 2026.6.22–6.26<br>
+  즐겁고 안전한 여행 되세요 <span class="heart">♥</span>
+</footer>
+
+<script>
+  // ---- 별빛 생성 ----
+  (function(){
+    const wrap=document.getElementById('stars');
+    if(wrap){
+      const n=26;
+      for(let i=0;i<n;i++){
+        const s=document.createElement('span');
+        s.className='star';
+        const size=Math.random()*2+1;
+        s.style.width=size+'px';s.style.height=size+'px';
+        s.style.left=Math.random()*100+'%';
+        s.style.top=Math.random()*55+'%';
+        s.style.animationDelay=(Math.random()*3)+'s';
+        wrap.appendChild(s);
+      }
+    }
+  })();
+
+  // ---- D-day 계산 (출발: 2026-06-22) ----
+  (function(){
+    const el=document.getElementById('ddayNum');
+    if(!el) return;
+    const dep=new Date(2026,5,22); // 6월=5
+    const now=new Date();
+    const t0=new Date(now.getFullYear(),now.getMonth(),now.getDate());
+    const diff=Math.round((dep-t0)/86400000);
+    if(diff>0) el.textContent='D-'+diff;
+    else if(diff===0) el.textContent='D-DAY';
+    else el.textContent='여행 중!';
+  })();
+
+  // ---- 상시 날씨 바 + 환율: 페이지 열리면 바로 로드 ----
+  window.addEventListener('load',()=>{
+    try{ loadWeather(); }catch(e){}
+    try{ loadFx(); }catch(e){}
+  });
+
+  // ---- Landing GO button ----
+  const landing=document.getElementById('landing');
+  const goBtn=document.getElementById('goBtn');
+  goBtn.addEventListener('click',()=>{
+    landing.classList.add('hide');
+    document.body.classList.remove('locked');
+    setTimeout(()=>{ landing.style.display='none'; },700);
+    window.scrollTo({top:0});
+  });
+
+  // ---- 헤더 타이틀 클릭 → 메인(랜딩)으로 복귀 ----
+  const heroTitle=document.getElementById('heroTitle');
+  if(heroTitle){
+    heroTitle.style.cursor='pointer';
+    heroTitle.addEventListener('click',()=>{
+      landing.style.display='';        // 다시 보이게
+      void landing.offsetWidth;        // 리플로우(트랜지션 재적용)
+      landing.classList.remove('hide');
+      document.body.classList.add('locked');
+      window.scrollTo({top:0});
+    });
+  }
+
+  const tabs=document.querySelectorAll('.tab');
+  const panels=document.querySelectorAll('.panel');
+  tabs.forEach(t=>{
+    t.addEventListener('click',()=>{
+      tabs.forEach(x=>x.classList.remove('active'));
+      panels.forEach(p=>p.classList.remove('active'));
+      t.classList.add('active');
+      document.getElementById(t.dataset.tab).classList.add('active');
+      window.scrollTo({top:0,behavior:'smooth'});
+      if(t.dataset.tab==='money'){ loadFx(); }
+      if(t.dataset.tab==='weather'){ loadWeather(); }
+      if(t.dataset.tab==='route'){ loadRouteMap(); }
+    });
+  });
+
+  // ===== 날씨 (Open-Meteo, 무료·키 불필요) =====
+  let wxLoaded=false;
+  const WX_CITIES=[
+    {name:'후쿠오카', lat:33.59, lon:130.40},
+    {name:'우레시노', lat:33.10, lon:129.98},
+    {name:'나가사키', lat:32.75, lon:129.87},
+  ];
+  // WMO weather code -> [이모지, 설명]
+  function wxInfo(c){
+    const m={
+      0:['☀️','맑음'],1:['🌤️','대체로 맑음'],2:['⛅','구름 조금'],3:['☁️','흐림'],
+      45:['🌫️','안개'],48:['🌫️','짙은 안개'],
+      51:['🌦️','약한 이슬비'],53:['🌦️','이슬비'],55:['🌦️','강한 이슬비'],
+      56:['🌧️','어는 이슬비'],57:['🌧️','어는 이슬비'],
+      61:['🌧️','약한 비'],63:['🌧️','비'],65:['🌧️','강한 비'],
+      66:['🌧️','어는 비'],67:['🌧️','어는 비'],
+      71:['🌨️','약한 눈'],73:['🌨️','눈'],75:['❄️','강한 눈'],77:['❄️','싸락눈'],
+      80:['🌦️','약한 소나기'],81:['🌧️','소나기'],82:['⛈️','강한 소나기'],
+      85:['🌨️','눈 소나기'],86:['🌨️','눈 소나기'],
+      95:['⛈️','뇌우'],96:['⛈️','뇌우·우박'],99:['⛈️','강한 뇌우']
+    };
+    return m[c]||['🌡️','—'];
+  }
+  const WX_DOW=['일','월','화','수','목','금','토'];
+
+  function loadWeather(){
+    if(wxLoaded) return;
+    wxLoaded=true;
+    const box=document.getElementById('wxBox');
+    Promise.all(WX_CITIES.map(ci=>{
+      const url=`https://api.open-meteo.com/v1/forecast?latitude=${ci.lat}&longitude=${ci.lon}`
+        +`&current=temperature_2m,weather_code,relative_humidity_2m`
+        +`&daily=weather_code,temperature_2m_max,temperature_2m_min,precipitation_probability_max`
+        +`&timezone=Asia%2FTokyo&forecast_days=7`;
+      return fetch(url).then(r=>r.json()).then(d=>({ci,d})).catch(()=>({ci,err:true}));
+    })).then(results=>{
+      let html='';
+      let barItems='';
+      let weekDaily=null; // 일주일 요약용 (대표: 후쿠오카)
+      results.forEach(({ci,d,err})=>{
+        if(err||!d||!d.current){
+          html+=`<div class="wx-city"><div class="wx-now"><div class="meta"><div class="city">${ci.name}</div><div class="desc">날씨 정보를 불러오지 못했어요</div></div></div></div>`;
+          return;
+        }
+        const cur=d.current;
+        const [cIc,cDesc]=wxInfo(cur.weather_code);
+        // 상시 바 아이템
+        barItems+=`<div class="wxbar-item"><span class="ic">${cIc}</span>`
+              +`<span><span class="c">${ci.name}</span><br><span class="t">${Math.round(cur.temperature_2m)}°</span></span></div>`;
+        if(!weekDaily && d.daily) weekDaily=d.daily;
+        let days='';
+        for(let i=0;i<d.daily.time.length;i++){
+          const dt=new Date(d.daily.time[i]+'T00:00:00');
+          const [ic]=wxInfo(d.daily.weather_code[i]);
+          const hi=Math.round(d.daily.temperature_2m_max[i]);
+          const lo=Math.round(d.daily.temperature_2m_min[i]);
+          const pop=d.daily.precipitation_probability_max[i];
+          const today=i===0?' today':'';
+          days+=`<div class="wx-day${today}"><div class="dn">${i===0?'오늘':WX_DOW[dt.getDay()]}</div>`
+              +`<div class="di">${ic}</div><div class="dh">${hi}°</div><div class="dl">${lo}°</div>`
+              +`<div class="dp">${pop!=null?'💧'+pop+'%':''}</div></div>`;
+        }
+        html+=`<div class="wx-city">`
+          +`<div class="wx-now"><div class="ic">${cIc}</div>`
+          +`<div class="meta"><div class="city">${ci.name}</div>`
+          +`<div class="desc">${cDesc} · 습도 ${cur.relative_humidity_2m}%</div></div>`
+          +`<div class="temp">${Math.round(cur.temperature_2m)}°</div></div>`
+          +`<div class="wx-week">${days}</div></div>`;
+      });
+      // 일주일 요약 한 줄 (대표 도시 기준, 7일)
+      let weekLine='';
+      if(weekDaily){
+        let cells='';
+        for(let i=0;i<weekDaily.time.length;i++){
+          const dt=new Date(weekDaily.time[i]+'T00:00:00');
+          const [ic]=wxInfo(weekDaily.weather_code[i]);
+          const hi=Math.round(weekDaily.temperature_2m_max[i]);
+          const lo=Math.round(weekDaily.temperature_2m_min[i]);
+          const dn=i===0?'오늘':WX_DOW[dt.getDay()];
+          cells+=`<span><b>${dn}</b> <span class="wk-ic">${ic}</span> ${hi}°/${lo}°</span>`;
+          if(i<weekDaily.time.length-1) cells+=`<span class="wk-sep">·</span>`;
+        }
+        weekLine=`<div class="wxbar-week">${cells}</div>`;
+      }
+      const barHtml=`<div class="wxbar-row">${barItems}</div>${weekLine}`;
+      const now=new Date();
+      const hh=String(now.getHours()).padStart(2,'0');
+      const mm=String(now.getMinutes()).padStart(2,'0');
+      html+=`<div class="wx-updated">${now.getMonth()+1}/${now.getDate()} ${hh}:${mm} 기준 · 자료: Open-Meteo</div>`;
+      if(box) box.innerHTML=html;
+      const bar=document.getElementById('wxbar');
+      if(bar && barItems) bar.innerHTML=barHtml;
+    }).catch(()=>{
+      if(box) box.innerHTML='<div class="wx-error">날씨를 불러오지 못했어요. 인터넷 연결을 확인하고 다시 시도해 주세요.</div>';
+      const bar=document.getElementById('wxbar');
+      if(bar) bar.innerHTML='<div class="wxbar-loading">날씨를 불러오지 못했어요</div>';
+      wxLoaded=false;
+    });
+  }
+
+  // ===== 환율 계산기 =====
+  let fxRate=8.7; // JPY->KRW 기본값(조회 실패 시 사용)
+  let fxLoaded=false;
+  const fxJpy=document.getElementById('fxJpy');
+  const fxKrw=document.getElementById('fxKrw');
+  const fxRateEl=document.getElementById('fxRate');
+
+  function fxNum(s){
+    // 콤마·공백·숫자 외 문자 제거 후 숫자만 추출
+    const cleaned=(s+'').replace(/[^0-9.]/g,'');
+    return parseFloat(cleaned)||0;
+  }
+  function fxCalcFromJpy(){
+    const v=fxNum(fxJpy.value);
+    fxKrw.value=v?Math.round(v*fxRate).toLocaleString('en-US'):'';
+  }
+  function fxCalcFromKrw(){
+    const v=fxNum(fxKrw.value);
+    fxJpy.value=v?Math.round(v/fxRate).toLocaleString('en-US'):'';
+  }
+  if(fxJpy){
+    fxJpy.addEventListener('input',fxCalcFromJpy);
+    fxKrw.addEventListener('input',fxCalcFromKrw);
+    document.querySelectorAll('.fx-chip').forEach(c=>{
+      c.addEventListener('click',()=>{
+        fxJpy.value=Number(c.dataset.jpy).toLocaleString('en-US');
+        fxCalcFromJpy();
+        document.querySelectorAll('.fx-chip').forEach(x=>x.classList.remove('on'));
+        c.classList.add('on');
+      });
+    });
+  }
+
+  function setFxRate(rate,live){
+    fxRate=rate;
+    if(fxRateEl){
+      fxRateEl.innerHTML = `100엔 = 약 <b>${Math.round(rate*100).toLocaleString('en-US')}원</b> · 1,000원 = 약 <b>${Math.round(1000/rate).toLocaleString('en-US')}엔</b>`;
+    }
+    const note=document.getElementById('fxNote');
+    if(note){
+      note.textContent = live
+        ? '실시간 환율 · 참고용이며 실제 환전 시 수수료가 붙습니다.'
+        : '환율 조회 실패 — 기본 환율(100엔≈870원)로 계산 중입니다.';
+    }
+    fxCalcFromJpy();
+  }
+
+  // 시작하자마자 기본 환율로 화면에 표시 (입력하면 바로 계산됨)
+  setFxRate(fxRate,false);
+
+  function loadFx(){
+    if(fxLoaded){ fxCalcFromJpy(); return; }
+    fxLoaded=true;
+    // 1차: open.er-api.com, 2차: frankfurter.app
+    fetch('https://open.er-api.com/v6/latest/JPY')
+      .then(r=>r.json())
+      .then(d=>{
+        if(d&&d.rates&&d.rates.KRW){ setFxRate(d.rates.KRW,true); }
+        else throw new Error('no rate');
+      })
+      .catch(()=>{
+        fetch('https://api.frankfurter.app/latest?from=JPY&to=KRW')
+          .then(r=>r.json())
+          .then(d=>{
+            if(d&&d.rates&&d.rates.KRW) setFxRate(d.rates.KRW,true);
+            else setFxRate(fxRate,false);
+          })
+          .catch(()=>{ fxLoaded=false; setFxRate(fxRate,false); });
+      });
+  }
+
+  // ===== 동선 지도 (Leaflet + OpenStreetMap) =====
+  let routeMapLoaded=false;
+  function loadRouteMap(){
+    if(routeMapLoaded) return;
+    const elChk=document.getElementById('routeMap');
+    if(typeof L==='undefined'){
+      if(elChk) elChk.innerHTML='<div style="display:flex;align-items:center;justify-content:center;height:100%;color:#6b625a;font-size:.85rem;text-align:center;padding:20px;line-height:1.7;">지도를 불러오지 못했어요.<br>인터넷 연결을 확인하고 다시 열어주세요.<br>또는 아래 ‘구글 지도에서 길찾기’를 눌러주세요.</div>';
+      return;
+    }
+    routeMapLoaded=true;
+    const SPOTS=[
+      {name:'인천공항 (출발)', lat:37.4602, lon:126.4407, start:true},
+      {name:'① 후쿠오카', lat:33.5902, lon:130.4017},
+      {name:'② 우레시노 온천', lat:33.1006, lon:129.9817},
+      {name:'③ 나가사키', lat:32.7503, lon:129.8777},
+    ];
+    const map=L.map('routeMap',{scrollWheelZoom:false}).setView([35.2,128.6],6);
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{
+      maxZoom:18, attribution:'© OpenStreetMap'
+    }).addTo(map);
+    // 핀 표시
+    const bounds=[];
+    SPOTS.forEach(s=>{
+      const icon=L.divIcon({
+        className:'', html:`<div class="rmpin${s.start?' start':''}"><span>${s.start?'✈':s.name.charAt(0)}</span></div>`,
+        iconSize:[26,26], iconAnchor:[13,26], popupAnchor:[0,-26]
+      });
+      L.marker([s.lat,s.lon],{icon}).addTo(map).bindPopup(s.name);
+      bounds.push([s.lat,s.lon]);
+    });
+    // 비행 경로 (인천→후쿠오카) 점선
+    L.polyline([[37.4602,126.4407],[33.5902,130.4017]],{
+      color:'#1b4d5c', weight:2.5, dashArray:'6 8', opacity:.7
+    }).addTo(map);
+    // 차량 경로 (후쿠오카→우레시노→나가사키→후쿠오카) 실선
+    L.polyline([
+      [33.5902,130.4017],[33.1006,129.9817],[32.7503,129.8777],[33.5902,130.4017]
+    ],{ color:'#e07856', weight:3.5, opacity:.85 }).addTo(map);
+    // 전체 핀이 보이도록 화면 맞춤
+    map.fitBounds(bounds,{padding:[40,40]});
+    // 탭 전환 후 크기 재계산 (안 그러면 회색으로 깨짐)
+    setTimeout(()=>map.invalidateSize(),200);
+  }
+
+  // ===== 현재 시각에 맞춰 '지금 진행 중' 일정 표시 =====
+  const MOVER={ 'k-move':'🚗', 'k-food':'🍽️', 'k-sight':'🚶', 'k-stay':'🏨', 'k-rest':'♨️' };
+  function moverIcon(stop){
+    for(const k in MOVER){ if(stop.classList.contains(k)) return MOVER[k]; }
+    return '🚶';
+  }
+  function updateNow(){
+    const now=new Date();
+    // 모든 패널의 stop을 날짜별로 그룹화
+    document.querySelectorAll('.panel[id^="d"]').forEach(panel=>{
+      const stops=[...panel.querySelectorAll('.stop[data-start]')];
+      if(!stops.length) return;
+      // 기존 표시 제거
+      stops.forEach(s=>{
+        s.classList.remove('now','done');
+        const b=s.querySelector('.now-badge'); if(b) b.remove();
+      });
+      // 시작시각 파싱
+      const items=stops.map(s=>({el:s,start:new Date(s.dataset.start)}));
+      // 같은 날인지 확인 (해당 패널의 날짜)
+      const dayDate=items[0].start;
+      const sameDay = now.getFullYear()===dayDate.getFullYear()
+                   && now.getMonth()===dayDate.getMonth()
+                   && now.getDate()===dayDate.getDate();
+      if(!sameDay) return; // 그 날이 아니면 표시 안 함
+      // 현재 진행 중 = 시작시각이 지난 것 중 가장 마지막
+      let curIdx=-1;
+      items.forEach((it,i)=>{ if(it.start<=now) curIdx=i; });
+      items.forEach((it,i)=>{
+        if(i<curIdx) it.el.classList.add('done');
+        else if(i===curIdx){
+          it.el.classList.add('now');
+          const card=it.el.querySelector('.card');
+          if(card){
+            const badge=document.createElement('div');
+            badge.className='now-badge';
+            badge.innerHTML=`<span class="dot"></span><span class="mover">${moverIcon(it.el)}</span> 지금 여기예요`;
+            card.insertBefore(badge,card.firstChild);
+          }
+        }
+      });
+    });
+    // 오늘 안내 띠
+    const banner=document.getElementById('todayBanner');
+    if(banner){
+      const start=new Date(2026,5,22), end=new Date(2026,5,26,23,59);
+      const now2=new Date();
+      if(now2>=start && now2<=end){
+        const dayNum=Math.floor((now2-new Date(2026,5,22))/86400000)+1;
+        banner.innerHTML=`<span class="bic">🚶</span> 여행 ${dayNum}일차예요! 아래 일정 중 <b>주황 테두리</b>가 지금 시간대입니다.`;
+        banner.classList.add('show');
+      }
+    }
+  }
+  updateNow();
+  setInterval(updateNow,60000); // 1분마다 갱신
+</script>
+</body>
+</html>
